@@ -298,7 +298,7 @@ export const AI_PROVIDERS: AIProviderDef[] = [
     id: 'minimax',
     name: 'MiniMax',
     keyPlaceholder: 'API key',
-    keyURL: 'https://platform.minimax.io/user-center/basic-information/interface-key',
+    keyURL: 'https://platform.minimax.chat/user-center/basic-information/interface-key',
     defaultModel: 'MiniMax-M2.7',
     models: [
       { id: 'MiniMax-M2.7', name: 'MiniMax-M2.7', tag: 'Best' },

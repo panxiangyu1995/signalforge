@@ -45,7 +45,7 @@ export { cloneVectorNetwork, normalizeVectorNetwork, validateVectorNetwork } fro
 
 export {
   PATHWAY_PLUGIN_ID, LEGACY_PATHWAY_PLUGIN_ID, PATHWAY_PLUGIN_KEY, ANNOTATION_PLUGIN_KEY,
-  getPathwayData, setPathwayData, updatePathwayData,
+  getPathwayData, setPathwayData, updatePathwayData, computeUpdatedPluginData,
   type PathwayGlyphType, type PathwayProcessType, type PathwayArcType,
   type PathwayNodeData,
   type PathwayAnnotationType, type PathwayAnnotation,

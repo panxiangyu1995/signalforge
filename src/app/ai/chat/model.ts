@@ -36,12 +36,13 @@ function desktopFetch(): typeof fetch | undefined {
 
 export function createLanguageModel(config: ModelConfig): LanguageModel {
   const effectiveModelID = resolveLanguageModelID(config)
+  const apiKey = config.apiKey.trim()
   const fetch = desktopFetch()
 
   switch (config.providerID) {
     case 'openrouter': {
       const openrouter = createOpenRouter({
-        apiKey: config.apiKey,
+        apiKey,
         fetch,
         headers: {
           'X-OpenRouter-Title': 'SignalForge',
@@ -51,24 +52,24 @@ export function createLanguageModel(config: ModelConfig): LanguageModel {
       return openrouter(effectiveModelID)
     }
     case 'anthropic': {
-      const anthropic = createAnthropic({ apiKey: config.apiKey, fetch })
+      const anthropic = createAnthropic({ apiKey, fetch })
       return anthropic(effectiveModelID)
     }
     case 'openai': {
-      const openai = createOpenAI({ apiKey: config.apiKey, fetch })
+      const openai = createOpenAI({ apiKey, fetch })
       return openai(effectiveModelID)
     }
     case 'google': {
-      const google = createGoogleGenerativeAI({ apiKey: config.apiKey, fetch })
+      const google = createGoogleGenerativeAI({ apiKey, fetch })
       return google(effectiveModelID)
     }
     case 'deepseek': {
-      const deepseek = createDeepSeek({ apiKey: config.apiKey, fetch })
+      const deepseek = createDeepSeek({ apiKey, fetch })
       return deepseek(effectiveModelID)
     }
     case 'zai': {
       const zai = createAnthropic({
-        apiKey: config.apiKey,
+        apiKey,
         baseURL: 'https://api.z.ai/api/anthropic',
         fetch
       })
@@ -76,15 +77,15 @@ export function createLanguageModel(config: ModelConfig): LanguageModel {
     }
     case 'minimax': {
       const minimax = createOpenAI({
-        apiKey: config.apiKey,
-        baseURL: 'https://api.minimax.io/v1',
+        apiKey,
+        baseURL: 'https://api.minimax.chat/v1',
         fetch
       })
       return minimax.chat(effectiveModelID)
     }
     case 'openai-compatible': {
       const custom = createOpenAI({
-        apiKey: config.apiKey,
+        apiKey,
         baseURL: config.customBaseURL,
         fetch
       })
@@ -94,7 +95,7 @@ export function createLanguageModel(config: ModelConfig): LanguageModel {
     }
     case 'anthropic-compatible': {
       const custom = createAnthropic({
-        apiKey: config.apiKey,
+        apiKey,
         baseURL: config.customBaseURL,
         fetch
       })

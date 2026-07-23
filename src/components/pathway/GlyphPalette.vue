@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PathwayGlyphType, PathwayProcessType, PathwayArcType } from '@signal-forge/scene-graph'
 
+import { GLYPH_PALETTE_ENTITIES, GLYPH_PALETTE_PROCESSES, GLYPH_PALETTE_ARCS } from './labels'
 import GlyphButton from './GlyphButton.vue'
 import ArcButton from './ArcButton.vue'
 
@@ -15,40 +16,9 @@ const emit = defineEmits<{
   selectArc: [type: PathwayArcType]
 }>()
 
-const entities: { type: PathwayGlyphType; label: string }[] = [
-  { type: 'macromolecule', label: 'Protein' },
-  { type: 'simple_chemical', label: 'Small Molecule' },
-  { type: 'complex', label: 'Complex' },
-  { type: 'nucleic_acid_feature', label: 'Gene/RNA' },
-  { type: 'perturbation', label: 'Drug' },
-  { type: 'phenotype', label: 'Phenotype' },
-  { type: 'source_sink', label: 'Degradation' },
-  { type: 'unspecified_entity', label: 'Unknown' },
-]
-
-const processes: { type: PathwayProcessType; label: string }[] = [
-  { type: 'process', label: 'Reaction' },
-  { type: 'transport', label: 'Transport' },
-  { type: 'association', label: 'Association' },
-  { type: 'dissociation', label: 'Dissociation' },
-  { type: 'omitted_process', label: 'Omitted' },
-  { type: 'uncertain_process', label: 'Uncertain' },
-]
-
-const arcs: { type: PathwayArcType; label: string }[] = [
-  { type: 'production', label: 'Production' },
-  { type: 'consumption', label: 'Consumption' },
-  { type: 'catalysis', label: 'Catalysis' },
-  { type: 'inhibition', label: 'Inhibition' },
-  { type: 'stimulation', label: 'Stimulation' },
-  { type: 'necessary_stimulation', label: 'Nec. Stimulation' },
-  { type: 'modulation', label: 'Modulation' },
-  { type: 'trigger', label: 'Trigger' },
-  { type: 'logic_and', label: 'Logic AND' },
-  { type: 'logic_or', label: 'Logic OR' },
-  { type: 'logic_not', label: 'Logic NOT' },
-  { type: 'equivalence', label: 'Equivalence' },
-]
+const entities = GLYPH_PALETTE_ENTITIES
+const processes = GLYPH_PALETTE_PROCESSES
+const arcs = GLYPH_PALETTE_ARCS
 </script>
 
 <template>

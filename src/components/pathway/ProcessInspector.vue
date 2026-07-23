@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { SceneNode, PathwayNodeData, PathwayProcessType } from '@signal-forge/scene-graph'
+import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
-import { useI18n } from '@signal-forge/vue'
+import { useI18n } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import NumberField from '@/components/inputs/NumberField.vue'
 import PanelSection from '@/components/ui/panel/PanelSection.vue'
+import { PROCESS_TYPE_LABELS } from './labels'
 
 const { node, data } = defineProps<{
   node: SceneNode
@@ -16,15 +17,6 @@ const store = useEditorStore()
 const { panels } = useI18n()
 
 const processType = data.processType ?? 'process'
-
-const PROCESS_TYPE_LABELS: Record<PathwayProcessType, string> = {
-  process: 'Reaction',
-  transport: 'Transport',
-  association: 'Association',
-  dissociation: 'Dissociation',
-  omitted_process: 'Omitted',
-  uncertain_process: 'Uncertain',
-}
 
 function updateLabel(value: string) {
   store.renameNode(node.id, value)

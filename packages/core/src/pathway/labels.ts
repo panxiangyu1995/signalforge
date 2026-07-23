@@ -1,4 +1,4 @@
-import type { Canvas, CanvasKit, Font } from 'canvaskit-wasm'
+import type { Canvas, CanvasKit, Font, Path } from 'canvaskit-wasm'
 
 import type { SceneNode } from '@signal-forge/scene-graph'
 import type { PathwayNodeData, PathwayGlyphType } from '@signal-forge/scene-graph'
@@ -11,6 +11,21 @@ import { hexToCKColor } from './utils'
 const GLYPH_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize
 const COMPARTMENT_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize + 2
 const PROCESS_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize - 2
+
+function buildRoundedRectPath(ck: CanvasKit, w: number, h: number, cr: number): Path {
+  const path = new ck.Path()
+  path.moveTo(cr, 0)
+  path.lineTo(w - cr, 0)
+  path.quadTo(w, 0, w, cr)
+  path.lineTo(w, h - cr)
+  path.quadTo(w, h, w - cr, h)
+  path.lineTo(cr, h)
+  path.quadTo(0, h, 0, h - cr)
+  path.lineTo(0, cr)
+  path.quadTo(0, 0, cr, 0)
+  path.close()
+  return path
+}
 
 export function paintPathwayLabel(
   ck: CanvasKit,
@@ -128,10 +143,7 @@ export function paintStateVariables(
     const w = widths[i]
     const cr = Math.min(w / 2, badgeH / 2)
 
-    const path = ck.Path.makeFromSVGString(
-      `M${cr},0 L${w - cr},0 Q${w},0 ${w},${cr} L${w},${badgeH - cr} Q${w},${badgeH} ${w - cr},${badgeH} L${cr},${badgeH} Q0,${badgeH} 0,${badgeH - cr} L0,${cr} Q0,0 ${cr},0 Z`
-    )
-    if (!path) { x += w + badgeGap; continue }
+    const path = buildRoundedRectPath(ck, w, badgeH, cr)
     try {
       r.auxFill.setColor(ck.Color4f(1, 1, 1, 1))
       r.auxFill.setStyle(ck.PaintStyle.Fill)
@@ -195,7 +207,7 @@ function buildGlyphClipPath(
   ck: CanvasKit,
   node: SceneNode,
   data: PathwayNodeData
-): ReturnType<CanvasKit['Path']['makeFromSVGString']> | null {
+): Path | null {
   const w = node.width
   const h = node.height
   const glyphType = data.glyphType
@@ -204,9 +216,7 @@ function buildGlyphClipPath(
     const cr = glyphType === 'simple_chemical'
       ? Math.min(w / 2, h / 2)
       : Math.min(w, h) * 0.12
-    return ck.Path.makeFromSVGString(
-      `M${cr},0 L${w - cr},0 Q${w},0 ${w},${cr} L${w},${h - cr} Q${w},${h} ${w - cr},${h} L${cr},${h} Q0,${h} 0,${h - cr} L0,${cr} Q0,0 ${cr},0 Z`
-    )
+    return buildRoundedRectPath(ck, w, h, cr)
   }
 
   if (glyphType === 'complex') {

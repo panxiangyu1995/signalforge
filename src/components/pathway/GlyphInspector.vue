@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import type { SceneNode, PathwayNodeData, PathwayGlyphType } from '@signal-forge/scene-graph'
+import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
 import { computeUpdatedPluginData } from '@signal-forge/scene-graph'
-import { useI18n } from '@signal-forge/vue'
+import { useI18n } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import NumberField from '@/components/inputs/NumberField.vue'
 import PanelSection from '@/components/ui/panel/PanelSection.vue'
+import { GLYPH_TYPE_LABELS } from './labels'
 
 const { node, data } = defineProps<{
   node: SceneNode
@@ -17,17 +18,6 @@ const store = useEditorStore()
 const { panels } = useI18n()
 
 const glyphType = data.glyphType ?? 'unspecified_entity'
-
-const GLYPH_TYPE_LABELS: Record<PathwayGlyphType, string> = {
-  macromolecule: 'Protein',
-  simple_chemical: 'Small Molecule',
-  complex: 'Complex',
-  nucleic_acid_feature: 'Gene/RNA',
-  unspecified_entity: 'Unknown',
-  perturbation: 'Drug',
-  phenotype: 'Phenotype',
-  source_sink: 'Degradation',
-}
 
 function updateLabel(value: string) {
   store.renameNode(node.id, value)

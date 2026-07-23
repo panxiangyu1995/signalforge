@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { SceneNode, PathwayNodeData, PathwayArcType } from '@signal-forge/scene-graph'
+import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
-import { useI18n } from '@signal-forge/vue'
+import { useI18n } from '@open-pencil/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import PanelSection from '@/components/ui/panel/PanelSection.vue'
+import { ARC_TYPE_LABELS } from './labels'
 
 const { node, data } = defineProps<{
   node: SceneNode
@@ -17,21 +18,6 @@ const store = useEditorStore()
 const { panels } = useI18n()
 
 const arcType = data.arcType ?? 'consumption'
-
-const ARC_TYPE_LABELS: Record<PathwayArcType, string> = {
-  consumption: 'Consumption',
-  production: 'Production',
-  modulation: 'Modulation',
-  stimulation: 'Stimulation',
-  catalysis: 'Catalysis',
-  inhibition: 'Inhibition',
-  necessary_stimulation: 'Nec. Stimulation',
-  trigger: 'Trigger',
-  logic_and: 'Logic AND',
-  logic_or: 'Logic OR',
-  logic_not: 'Logic NOT',
-  equivalence: 'Equivalence',
-}
 
 const sourceName = computed(() => {
   if (!data.sourceId) return '—'

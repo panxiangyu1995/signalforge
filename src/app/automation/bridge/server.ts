@@ -16,6 +16,8 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined
   let intentionalDisconnect = false
+  let reconnectAttempts = 0
+  const MAX_RECONNECT_ATTEMPTS = 3
 
   const { handleRequest: handleAutomationRequest } =
     createAutomationCommandHandlers(makeFigmaFromStore)
@@ -37,7 +39,7 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     }
 
     ws.onopen = () => {
-      console.debug('[Automation] WebSocket connected to MCP server')
+      reconnectAttempts = 0
       ws?.send(JSON.stringify({ type: 'register', token }))
     }
 
@@ -71,18 +73,18 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     ws.onclose = (event) => {
       ws = null
       if (intentionalDisconnect || event.code === 1000) return
-      console.error('[Automation] WebSocket closed:', `code=${event.code} reason=${event.reason}`)
       scheduleReconnect()
     }
 
-    ws.onerror = (event) => {
-      console.error('[Automation] WebSocket error:', event)
+    ws.onerror = () => {
       ws?.close()
     }
   }
 
   function scheduleReconnect() {
     clearTimeout(reconnectTimer)
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return
+    reconnectAttempts++
     reconnectTimer = setTimeout(connect, 2000)
   }
 

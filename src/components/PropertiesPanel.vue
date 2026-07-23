@@ -5,7 +5,7 @@ import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, TabsContent, T
 import { useI18n, useSelectionState } from '@signal-forge/vue'
 
 import { useAIChat } from '@/app/ai/chat/use'
-import { usePathwayMode } from '@/app/pathway/mode'
+import { PATHWAY_NODE_TYPES, usePathwayMode } from '@/app/pathway/use'
 
 import ChatPanel from './ChatPanel.vue'
 import DesignPanel from './DesignPanel.vue'
@@ -16,8 +16,6 @@ const { activeTab } = useAIChat()
 const { panels } = useI18n()
 const { isPathwayMode } = usePathwayMode()
 const { selectedNode } = useSelectionState()
-
-const PATHWAY_NODE_TYPES = new Set(['PATHWAY_GLYPH', 'PATHWAY_PROCESS', 'PATHWAY_ARC', 'COMPARTMENT'])
 
 const hasPathwaySelection = computed(() => {
   const type = selectedNode.value?.type

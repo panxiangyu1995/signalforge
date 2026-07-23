@@ -43,12 +43,19 @@ export function paintMacromolecule(
   if (w <= 0 || h <= 0) return
   const cr = Math.min(w, h) * 0.12
 
-  const path = ck.Path.makeFromSVGString(
-    `M${cr},0 L${w - cr},0 Q${w},0 ${w},${cr} L${w},${h - cr} Q${w},${h} ${w - cr},${h} L${cr},${h} Q0,${h} 0,${h - cr} L0,${cr} Q0,0 ${cr},0 Z`
-  )
-  if (!path) return
-
+  const path = new ck.Path()
   try {
+    path.moveTo(cr, 0)
+    path.lineTo(w - cr, 0)
+    path.quadTo(w, 0, w, cr)
+    path.lineTo(w, h - cr)
+    path.quadTo(w, h, w - cr, h)
+    path.lineTo(cr, h)
+    path.quadTo(0, h, 0, h - cr)
+    path.lineTo(0, cr)
+    path.quadTo(0, 0, cr, 0)
+    path.close()
+
     r.fillPaint.setStyle(ck.PaintStyle.Fill)
     r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
     canvas.drawPath(path, r.fillPaint)
@@ -75,12 +82,19 @@ export function paintSimpleChemical(
   if (w <= 0 || h <= 0) return
   const cr = Math.min(w / 2, h / 2)
 
-  const path = ck.Path.makeFromSVGString(
-    `M${cr},0 L${w - cr},0 Q${w},0 ${w},${cr} L${w},${h - cr} Q${w},${h} ${w - cr},${h} L${cr},${h} Q0,${h} 0,${h - cr} L0,${cr} Q0,0 ${cr},0 Z`
-  )
-  if (!path) return
-
+  const path = new ck.Path()
   try {
+    path.moveTo(cr, 0)
+    path.lineTo(w - cr, 0)
+    path.quadTo(w, 0, w, cr)
+    path.lineTo(w, h - cr)
+    path.quadTo(w, h, w - cr, h)
+    path.lineTo(cr, h)
+    path.quadTo(0, h, 0, h - cr)
+    path.lineTo(0, cr)
+    path.quadTo(0, 0, cr, 0)
+    path.close()
+
     r.fillPaint.setStyle(ck.PaintStyle.Fill)
     r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
     canvas.drawPath(path, r.fillPaint)

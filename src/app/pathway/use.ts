@@ -4,7 +4,7 @@ import type { NodeType } from '@signal-forge/scene-graph'
 
 import { useEditorStore } from '@/app/editor/active-store'
 
-const PATHWAY_NODE_TYPES: Set<NodeType> = new Set([
+export const PATHWAY_NODE_TYPES: Set<NodeType> = new Set([
   'PATHWAY_GLYPH',
   'PATHWAY_PROCESS',
   'PATHWAY_ARC',
