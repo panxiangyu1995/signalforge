@@ -36,9 +36,9 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
 
   describe('T1: BIOPATH_TOOLS registry completeness', () => {
     it('BIOPATH_TOOLS has correct tool count (core + extended, no overlap)', () => {
-      expect(BIOPATH_CORE_TOOLS.length).toBe(34)
+      expect(BIOPATH_CORE_TOOLS.length).toBe(36)
       expect(BIOPATH_EXTENDED_TOOLS.length).toBe(29)
-      expect(BIOPATH_TOOLS.length).toBe(63)
+      expect(BIOPATH_TOOLS.length).toBe(65)
     })
 
     it('BIOPATH_TOOLS = CORE + EXTENDED with no overlap', () => {

@@ -12,7 +12,8 @@ export function bindNodeEvents(
     handlers.previewUpdated ? emitter.on('node:previewUpdated', handlers.previewUpdated) : null,
     handlers.deleted ? emitter.on('node:deleted', handlers.deleted) : null,
     handlers.reparented ? emitter.on('node:reparented', handlers.reparented) : null,
-    handlers.reordered ? emitter.on('node:reordered', handlers.reordered) : null
+    handlers.reordered ? emitter.on('node:reordered', handlers.reordered) : null,
+    handlers.batchCompleted ? emitter.on('batch:completed', handlers.batchCompleted) : null
   ].filter((unbind): unbind is () => void => !!unbind)
 
   return () => {

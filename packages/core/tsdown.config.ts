@@ -35,7 +35,13 @@ export default defineConfig({
   clean: true,
   outDir: './dist',
   deps: {
-    neverBundle: [...Object.keys(packageJson.dependencies ?? {}), /^node:/],
+    neverBundle: [
+      ...Object.keys(packageJson.dependencies ?? {}),
+      /^node:/,
+      'ai',
+      'valibot',
+      /^@ai-sdk\//,
+    ],
     onlyBundle: false
   }
 })

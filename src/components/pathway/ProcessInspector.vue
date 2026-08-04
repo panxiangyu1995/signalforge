@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
-import { useI18n } from '@open-pencil/vue'
+import { useI18n } from '@signal-forge/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import NumberField from '@/components/inputs/NumberField.vue'

@@ -77,6 +77,17 @@ export const PUBLICATION_STYLE = {
     unspecified_entity: '#F2F3F4',
   },
 
+  entityGradients: {
+    macromolecule: { top: '#D4E6F1', bottom: '#A9CCE3' },
+    simple_chemical: { top: '#FADBD8', bottom: '#F5B7B1' },
+    nucleic_acid_feature: { top: '#D5F5E3', bottom: '#ABEBC6' },
+    complex: { top: '#E8DAEF', bottom: '#D2B4DE' },
+    perturbation: { top: '#D1F2EB', bottom: '#A3E4D7' },
+    phenotype: { top: '#FEF9E7', bottom: '#F9E79F' },
+    source_sink: { top: '#F2F3F4', bottom: '#D5D8DC' },
+    unspecified_entity: { top: '#F2F3F4', bottom: '#D5D8DC' },
+  },
+
   compartmentFills: {
     extracellular: 'rgba(173, 216, 230, 0.12)',
     membrane: 'rgba(255, 193, 7, 0.15)',
@@ -86,6 +97,17 @@ export const PUBLICATION_STYLE = {
     endoplasmic_reticulum: 'rgba(129, 199, 132, 0.10)',
     golgi: 'rgba(255, 138, 101, 0.10)',
     default: 'rgba(0, 0, 0, 0.03)',
+  },
+
+  compartmentGradients: {
+    extracellular: { top: 'rgba(173, 216, 230, 0.15)', bottom: 'rgba(173, 216, 230, 0.08)' },
+    membrane: { top: 'rgba(255, 193, 7, 0.18)', bottom: 'rgba(255, 193, 7, 0.10)' },
+    cytoplasm: { top: 'rgba(200, 230, 201, 0.13)', bottom: 'rgba(200, 230, 201, 0.06)' },
+    nucleus: { top: 'rgba(206, 147, 216, 0.13)', bottom: 'rgba(206, 147, 216, 0.06)' },
+    mitochondria: { top: 'rgba(255, 183, 77, 0.13)', bottom: 'rgba(255, 183, 77, 0.06)' },
+    endoplasmic_reticulum: { top: 'rgba(129, 199, 132, 0.13)', bottom: 'rgba(129, 199, 132, 0.06)' },
+    golgi: { top: 'rgba(255, 138, 101, 0.13)', bottom: 'rgba(255, 138, 101, 0.06)' },
+    default: { top: 'rgba(0, 0, 0, 0.04)', bottom: 'rgba(0, 0, 0, 0.02)' },
   },
 
   entityBorders: {
@@ -105,6 +127,20 @@ export const PUBLICATION_STYLE = {
     inhibition: '#E74C3C',
     catalysis: '#27AE60',
     default: '#555',
+  },
+
+  dropShadow: {
+    offsetX: 1,
+    offsetY: 2,
+    blur: 3,
+    color: 'rgba(0, 0, 0, 0.15)',
+  },
+
+  compartmentShadow: {
+    offsetX: 2,
+    offsetY: 4,
+    blur: 8,
+    color: 'rgba(0, 0, 0, 0.08)',
   },
 } as const
 

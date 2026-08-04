@@ -15,6 +15,10 @@ interface ReactomeParticipant {
   typeName: string
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '')
+}
+
 async function safeFetch(url: string): Promise<Response | null> {
   if (typeof fetch === 'undefined') return null
 
@@ -42,13 +46,26 @@ export async function searchPathways(
   if (!response?.ok) return []
 
   try {
-    const data = await response.json() as { results?: Array<{ stId: string; name: string; species: string; dbId: number }> }
-    return (data.results ?? []).map(r => ({
-      stableId: r.stId,
-      name: r.name,
-      species: r.species,
-      dbId: r.dbId
-    }))
+    const data = await response.json() as {
+      results?: Array<{
+        entries?: Array<{
+          stId?: string
+          name?: string
+          species?: string[]
+          dbId?: number
+          exactType?: string
+        }>
+      }>
+    }
+    const entries = (data.results ?? []).flatMap(r => r.entries ?? [])
+    return entries
+      .filter(e => e.exactType === 'Pathway')
+      .map(e => ({
+        stableId: e.stId ?? '',
+        name: stripHtml(e.name ?? ''),
+        species: Array.isArray(e.species) ? e.species.join(', ') : (e.species ?? ''),
+        dbId: e.dbId ?? 0
+      }))
   } catch {
     return []
   }
@@ -84,19 +101,25 @@ export async function getPathwayParticipants(
 
 export async function findPathwaysByGene(
   gene: string,
-  species?: string
+  _species?: string
 ): Promise<ReactomePathway[]> {
   const url = `${REACTOME_API_BASE}/data/mapping/UniProt/${gene}/pathways`
   const response = await safeFetch(url)
   if (!response?.ok) return []
 
   try {
-    const data = await response.json() as Array<{ stId: string; name: string; species: string; dbId: number }>
+    const data = await response.json() as Array<{
+      dbId?: number
+      stId?: string
+      displayName?: string
+      name?: string[]
+      speciesName?: string
+    }>
     return data.map(r => ({
-      stableId: r.stId,
-      name: r.name,
-      species: r.species,
-      dbId: r.dbId
+      stableId: r.stId ?? '',
+      name: r.displayName ?? (Array.isArray(r.name) ? r.name.join(', ') : (r.name ?? '')),
+      species: r.speciesName ?? '',
+      dbId: r.dbId ?? 0
     }))
   } catch {
     return []

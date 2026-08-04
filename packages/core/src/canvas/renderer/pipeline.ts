@@ -1,6 +1,6 @@
 import type { Canvas } from 'canvaskit-wasm'
 
-import type { SceneGraph } from '@signal-forge/scene-graph'
+import type { SceneGraph, SceneNode } from '@signal-forge/scene-graph'
 import { computeDescendantVisualBounds } from '@signal-forge/scene-graph/geometry'
 
 import { drawPageGuides } from '#core/canvas/page-guides'
@@ -8,6 +8,48 @@ import type { RenderOverlays, SkiaRenderer } from '#core/canvas/renderer'
 import type { EditorState } from '#core/editor/types'
 
 import { renderSceneBacking, updateSceneBackingPreviewState } from './retained-backing'
+
+const PATHWAY_NODE_TYPES = new Set(['PATHWAY_GLYPH', 'PATHWAY_PROCESS', 'PATHWAY_ARC', 'COMPARTMENT'])
+
+function isPathwayPage(graph: SceneGraph, pageId: string): boolean {
+  const page = graph.getNode(pageId)
+  if (!page) return false
+  for (const childId of page.childIds) {
+    const child = graph.getNode(childId)
+    if (child && PATHWAY_NODE_TYPES.has(child.type)) return true
+  }
+  return false
+}
+
+function renderPathwayPageChildren(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  graph: SceneGraph,
+  pageId: string,
+  overlays: RenderOverlays
+): void {
+  const pageNode = graph.getNode(pageId)
+  if (!pageNode) return
+
+  const compartmentIds: string[] = []
+  const arcIds: string[] = []
+  const entityIds: string[] = []
+  const otherIds: string[] = []
+
+  for (const childId of pageNode.childIds) {
+    const child = graph.getNode(childId)
+    if (!child) continue
+    if (child.type === 'COMPARTMENT') { compartmentIds.push(childId) }
+    else if (child.type === 'PATHWAY_ARC') { arcIds.push(childId) }
+    else if (child.type === 'PATHWAY_GLYPH' || child.type === 'PATHWAY_PROCESS') { entityIds.push(childId) }
+    else { otherIds.push(childId) }
+  }
+
+  for (const id of compartmentIds) r.renderNode(canvas, graph, id, overlays)
+  for (const id of otherIds) r.renderNode(canvas, graph, id, overlays)
+  for (const id of arcIds) r.renderNode(canvas, graph, id, overlays)
+  for (const id of entityIds) r.renderNode(canvas, graph, id, overlays)
+}
 
 export function renderSceneToCanvas(
   r: SkiaRenderer,
@@ -19,8 +61,12 @@ export function renderSceneToCanvas(
   r.worldViewport = { x: -1e9, y: -1e9, w: 2e9, h: 2e9 }
   const pageNode = graph.getNode(pageId)
   if (pageNode) {
-    for (const childId of pageNode.childIds) {
-      r.renderNode(canvas, graph, childId, {})
+    if (isPathwayPage(graph, pageId)) {
+      renderPathwayPageChildren(r, canvas, graph, pageId, {})
+    } else {
+      for (const childId of pageNode.childIds) {
+        r.renderNode(canvas, graph, childId, {})
+      }
     }
   }
   r.worldViewport = prevViewport
@@ -299,7 +345,12 @@ function renderPageChildren(
   graph: SceneGraph,
   overlays: RenderOverlays
 ): void {
-  const pageNode = graph.getNode(r.pageId ?? graph.rootId)
+  const pageId = r.pageId ?? graph.rootId
+  if (isPathwayPage(graph, pageId)) {
+    renderPathwayPageChildren(r, canvas, graph, pageId, overlays)
+    return
+  }
+  const pageNode = graph.getNode(pageId)
   if (!pageNode) return
   for (const childId of pageNode.childIds) {
     r.renderNode(canvas, graph, childId, overlays)
@@ -341,8 +392,13 @@ function recordScenePicture(
   )
   const recCanvas = recorder.beginRecording(bounds)
   if (pageNode) {
-    for (const childId of pageNode.childIds) {
-      r.renderNode(recCanvas, graph, childId, {})
+    const pageId = r.pageId ?? graph.rootId
+    if (isPathwayPage(graph, pageId)) {
+      renderPathwayPageChildren(r, recCanvas, graph, pageId, {})
+    } else {
+      for (const childId of pageNode.childIds) {
+        r.renderNode(recCanvas, graph, childId, {})
+      }
     }
   }
   r.scenePicture = recorder.finishRecordingAsPicture()

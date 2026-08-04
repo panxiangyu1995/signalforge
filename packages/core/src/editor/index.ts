@@ -11,3 +11,7 @@ export type {
   EditorState,
   Tool
 } from './types'
+export type { DocumentColorProfileMode } from './color-space'
+export type { VariantConflict } from './components/variants'
+export type { PageSnapshot } from './history/snapshot'
+export type { PenDragOptions } from './shapes/pen'

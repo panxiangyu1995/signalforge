@@ -88,10 +88,48 @@ export class FigmaAPI implements NodeProxyHost {
     this._currentPageId = pages[0]?.id ?? graph.rootId
   }
 
-  private _pathwayStyle: 'sbgn' | 'publication' = 'sbgn'
+  private _pathwayStyle: 'sbgn' | 'publication' = 'publication'
+  private _batchDepth = 0
+  private _pathwayBatch = false
 
   setRenderer(renderer: SkiaRenderer | null): void {
     this._renderer = renderer
+  }
+
+  beginBatch(): void {
+    this._batchDepth++
+    this.graph.muteEvents()
+  }
+
+  endBatch(): void {
+    if (this._batchDepth <= 0) return
+    this._batchDepth--
+    this.graph.unmuteEvents()
+  }
+
+  beginPathwayBatch(): void {
+    this._pathwayBatch = true
+    this._batchDepth++
+    this.graph.muteEvents()
+  }
+
+  endPathwayBatch(): void {
+    if (this._batchDepth <= 0) return
+    this._batchDepth--
+    if (this._batchDepth === 0) this._pathwayBatch = false
+    this.graph.unmuteEvents()
+  }
+
+  resetPathwayBatch(): void {
+    this._pathwayBatch = false
+    this._batchDepth = 0
+    if (this.graph.eventsMuted) {
+      while (this.graph.eventsMuted) this.graph.unmuteEvents()
+    }
+  }
+
+  get pathwayBatch(): boolean {
+    return this._pathwayBatch
   }
 
   setPathwayStyle(style: 'sbgn' | 'publication'): void {

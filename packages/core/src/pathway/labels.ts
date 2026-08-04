@@ -260,6 +260,69 @@ function buildGlyphClipPath(
   return null
 }
 
+export function paintUnitOfInformation(
+  ck: CanvasKit,
+  canvas: Canvas,
+  node: SceneNode,
+  data: PathwayNodeData,
+  r: SkiaRenderer
+): void {
+  if (!data.unitOfInformation || data.unitOfInformation.length === 0) return
+  const font = r.sectionTitleFont
+  if (!font) return
+
+  const badgeH = 16
+  const badgeGap = 2
+  const badgeOffsetY = 2
+  const minBadgeW = 28
+  const svBadgeH = (data.stateVariables && data.stateVariables.length > 0) ? badgeH + badgeOffsetY : 0
+
+  const widths: number[] = []
+  let totalW = 0
+
+  for (const ui of data.unitOfInformation) {
+    const textW = measureTextWidth(font, ui.text)
+    const w = Math.max(minBadgeW, textW + 8)
+    widths.push(w)
+    totalW += w
+  }
+
+  totalW += (data.unitOfInformation.length - 1) * badgeGap
+
+  let x = (node.width - totalW) / 2
+  const y = -badgeH - badgeOffsetY - svBadgeH
+
+  for (let i = 0; i < data.unitOfInformation.length; i++) {
+    const ui = data.unitOfInformation[i]
+    const label = ui.text
+    const w = widths[i]
+    const cr = Math.min(w / 2, badgeH / 2)
+
+    const path = buildRoundedRectPath(ck, w, badgeH, cr)
+    try {
+      r.auxFill.setColor(ck.Color4f(1, 1, 1, 1))
+      r.auxFill.setStyle(ck.PaintStyle.Fill)
+      canvas.drawPath(path, r.auxFill)
+
+      r.auxStroke.setColor(ck.Color4f(0x55 / 255, 0x55 / 255, 0x55 / 255, 1))
+      r.auxStroke.setStyle(ck.PaintStyle.Stroke)
+      r.auxStroke.setStrokeWidth(SBGN_STYLE.infoboxBorderWidth)
+      canvas.drawPath(path, r.auxStroke)
+    } finally {
+      path.delete()
+    }
+
+    const textW = measureTextWidth(font, label)
+    const textX = x + (w - textW) / 2
+    const textY = y + badgeH / 2 + SBGN_STYLE.infoboxFontSize * 0.35
+
+    r.auxFill.setColor(ck.Color4f(0, 0, 0, 1))
+    canvas.drawText(label, textX, textY, r.auxFill, font)
+
+    x += w + badgeGap
+  }
+}
+
 function ellipsizeText(font: Font, text: string, maxWidth: number): string {
   if (!text) return ''
   const totalW = measureTextWidth(font, text)

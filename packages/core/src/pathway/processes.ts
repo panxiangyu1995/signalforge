@@ -110,7 +110,7 @@ export function paintOmittedProcess(
   r.fillPaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor))
   canvas.drawRect(ck.LTRBRect(0, 0, w, h), r.fillPaint)
 
-  const dashEffect = ck.PathEffect.makeDash([3, 3], 0)
+  const dashEffect = ck.PathEffect.MakeDash([3, 3], 0)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
   r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.defaultBorderWidth)
@@ -137,7 +137,7 @@ export function paintUncertainProcess(
   r.fillPaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor))
   canvas.drawRect(ck.LTRBRect(0, 0, w, h), r.fillPaint)
 
-  const dashEffect = ck.PathEffect.makeDash([4, 2], 0)
+  const dashEffect = ck.PathEffect.MakeDash([4, 2], 0)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
   r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.defaultBorderWidth)

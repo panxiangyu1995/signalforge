@@ -19,6 +19,7 @@ import { annotatePathway } from './annotate'
 import { mergePathway, splitPathway } from './merge'
 import { setActiveState } from './active-state'
 import { overlayExpressionData } from './overlay'
+import { beginPathway, endPathway } from './batch'
 
 export {
   createPathway,
@@ -43,6 +44,8 @@ export {
   splitPathway,
   setActiveState,
   overlayExpressionData,
+  beginPathway,
+  endPathway,
 }
 
 export const PATHWAY_TOOLS: ToolDef[] = [
@@ -68,4 +71,6 @@ export const PATHWAY_TOOLS: ToolDef[] = [
   splitPathway,
   setActiveState,
   overlayExpressionData,
+  beginPathway,
+  endPathway,
 ]

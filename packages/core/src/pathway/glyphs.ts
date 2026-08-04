@@ -1,4 +1,4 @@
-import type { Canvas, CanvasKit } from 'canvaskit-wasm'
+import type { Canvas, CanvasKit, Shader } from 'canvaskit-wasm'
 
 import type { SceneNode } from '@signal-forge/scene-graph'
 import type { PathwayNodeData, PathwayGlyphType } from '@signal-forge/scene-graph'
@@ -8,12 +8,33 @@ import type { SkiaRenderer } from '#core/canvas/renderer'
 import { SBGN_STYLE, PUBLICATION_STYLE, type PathwayStyle } from './constants'
 import { hexToCKColor } from './utils'
 
-function glyphFill(ck: CanvasKit, glyphType: PathwayGlyphType | undefined, style: PathwayStyle): Float32Array {
+function glyphFillColor(
+  ck: CanvasKit,
+  glyphType: PathwayGlyphType | undefined,
+  style: PathwayStyle
+): Float32Array {
   if (style === 'publication' && glyphType) {
     const fill = PUBLICATION_STYLE.entityFills[glyphType]
     if (fill) return hexToCKColor(ck, fill)
   }
   return hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor)
+}
+
+function glyphGradientShader(
+  ck: CanvasKit,
+  glyphType: PathwayGlyphType | undefined,
+  style: PathwayStyle,
+  nodeHeight: number
+): Shader | null {
+  if (style !== 'publication' || !glyphType) return null
+  const grad = PUBLICATION_STYLE.entityGradients[glyphType]
+  if (!grad) return null
+  return ck.Shader.MakeLinearGradient(
+    [0, 0], [0, nodeHeight],
+    [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
+    [0, 1],
+    ck.TileMode.Clamp
+  )
 }
 
 function glyphBorder(ck: CanvasKit, glyphType: PathwayGlyphType | undefined, style: PathwayStyle): Float32Array {
@@ -28,6 +49,43 @@ function glyphBorderWidth(data: PathwayNodeData): number {
   if (data.glyphType === 'complex') return SBGN_STYLE.complexBorderWidth
   if (data.stateVariables && data.stateVariables.length > 0) return SBGN_STYLE.entityBorderWidth
   return SBGN_STYLE.defaultBorderWidth
+}
+
+function applyGlyphFill(
+  ck: CanvasKit,
+  canvas: Canvas,
+  path: InstanceType<CanvasKit['Path']>,
+  glyphType: PathwayGlyphType | undefined,
+  style: PathwayStyle,
+  nodeHeight: number,
+  r: SkiaRenderer
+): void {
+  const shader = glyphGradientShader(ck, glyphType, style, nodeHeight)
+  r.fillPaint.setStyle(ck.PaintStyle.Fill)
+  if (shader) {
+    r.fillPaint.setShader(shader)
+    canvas.drawPath(path, r.fillPaint)
+    r.fillPaint.setShader(null)
+    shader.delete()
+  } else {
+    r.fillPaint.setColor(glyphFillColor(ck, glyphType, style))
+    canvas.drawPath(path, r.fillPaint)
+  }
+}
+
+function applyGlyphStroke(
+  ck: CanvasKit,
+  canvas: Canvas,
+  path: InstanceType<CanvasKit['Path']>,
+  glyphType: PathwayGlyphType | undefined,
+  style: PathwayStyle,
+  borderWidth: number,
+  r: SkiaRenderer
+): void {
+  r.strokePaint.setStyle(ck.PaintStyle.Stroke)
+  r.strokePaint.setColor(glyphBorder(ck, glyphType, style))
+  r.strokePaint.setStrokeWidth(borderWidth)
+  canvas.drawPath(path, r.strokePaint)
 }
 
 export function paintMacromolecule(
@@ -56,14 +114,8 @@ export function paintMacromolecule(
     path.quadTo(0, 0, cr, 0)
     path.close()
 
-    r.fillPaint.setStyle(ck.PaintStyle.Fill)
-    r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-    canvas.drawPath(path, r.fillPaint)
-
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
-    r.strokePaint.setStrokeWidth(glyphBorderWidth(data))
-    canvas.drawPath(path, r.strokePaint)
+    applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
+    applyGlyphStroke(ck, canvas, path, data.glyphType, style, glyphBorderWidth(data), r)
   } finally {
     path.delete()
   }
@@ -95,14 +147,8 @@ export function paintSimpleChemical(
     path.quadTo(0, 0, cr, 0)
     path.close()
 
-    r.fillPaint.setStyle(ck.PaintStyle.Fill)
-    r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-    canvas.drawPath(path, r.fillPaint)
-
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
-    r.strokePaint.setStrokeWidth(glyphBorderWidth(data))
-    canvas.drawPath(path, r.strokePaint)
+    applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
+    applyGlyphStroke(ck, canvas, path, data.glyphType, style, glyphBorderWidth(data), r)
   } finally {
     path.delete()
   }
@@ -133,14 +179,8 @@ export function paintComplex(
     path.lineTo(0, cut)
     path.close()
 
-    r.fillPaint.setStyle(ck.PaintStyle.Fill)
-    r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-    canvas.drawPath(path, r.fillPaint)
-
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.entityBorderWidth)
-    canvas.drawPath(path, r.strokePaint)
+    applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
+    applyGlyphStroke(ck, canvas, path, data.glyphType, style, SBGN_STYLE.entityBorderWidth, r)
   } finally {
     path.delete()
   }
@@ -169,14 +209,8 @@ export function paintNucleicAcidFeature(
     path.quadTo(0, h, 0, h - br)
     path.close()
 
-    r.fillPaint.setStyle(ck.PaintStyle.Fill)
-    r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-    canvas.drawPath(path, r.fillPaint)
-
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.entityBorderWidth)
-    canvas.drawPath(path, r.strokePaint)
+    applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
+    applyGlyphStroke(ck, canvas, path, data.glyphType, style, SBGN_STYLE.entityBorderWidth, r)
   } finally {
     path.delete()
   }
@@ -203,14 +237,8 @@ export function paintPhenotype(
     path.lineTo(0, h * 0.5)
     path.close()
 
-    r.fillPaint.setStyle(ck.PaintStyle.Fill)
-    r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-    canvas.drawPath(path, r.fillPaint)
-
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.entityBorderWidth)
-    canvas.drawPath(path, r.strokePaint)
+    applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
+    applyGlyphStroke(ck, canvas, path, data.glyphType, style, SBGN_STYLE.entityBorderWidth, r)
   } finally {
     path.delete()
   }
@@ -237,14 +265,8 @@ export function paintPerturbation(
     path.lineTo(w, 0)
     path.close()
 
-    r.fillPaint.setStyle(ck.PaintStyle.Fill)
-    r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-    canvas.drawPath(path, r.fillPaint)
-
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.entityBorderWidth)
-    canvas.drawPath(path, r.strokePaint)
+    applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
+    applyGlyphStroke(ck, canvas, path, data.glyphType, style, SBGN_STYLE.entityBorderWidth, r)
   } finally {
     path.delete()
   }
@@ -264,8 +286,29 @@ export function paintSourceSink(
   const cx = w / 2
   const cy = h / 2
 
+  if (style === 'publication') {
+    const shader = glyphGradientShader(ck, data.glyphType, style, h)
+    if (shader) {
+      r.fillPaint.setStyle(ck.PaintStyle.Fill)
+      r.fillPaint.setShader(shader)
+      canvas.drawCircle(cx, cy, radius, r.fillPaint)
+      r.fillPaint.setShader(null)
+      shader.delete()
+    } else {
+      r.fillPaint.setStyle(ck.PaintStyle.Fill)
+      r.fillPaint.setColor(glyphFillColor(ck, data.glyphType, style))
+      canvas.drawCircle(cx, cy, radius, r.fillPaint)
+    }
+  } else {
+    r.fillPaint.setStyle(ck.PaintStyle.Fill)
+    r.fillPaint.setColor(glyphFillColor(ck, data.glyphType, style))
+    canvas.drawCircle(cx, cy, radius, r.fillPaint)
+  }
+
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-  r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.sourceSinkStroke))
+  r.strokePaint.setColor(style === 'publication'
+    ? glyphBorder(ck, data.glyphType, style)
+    : hexToCKColor(ck, SBGN_STYLE.sourceSinkStroke))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.defaultBorderWidth)
 
   canvas.drawCircle(cx, cy, radius, r.strokePaint)
@@ -293,15 +336,24 @@ export function paintUnspecifiedEntity(
 ): void {
   const w = node.width
   const h = node.height
+  const rect = ck.LTRBRect(0, 0, w, h)
 
+  const shader = glyphGradientShader(ck, data.glyphType, style, h)
   r.fillPaint.setStyle(ck.PaintStyle.Fill)
-  r.fillPaint.setColor(glyphFill(ck, data.glyphType, style))
-  canvas.drawOval(ck.LTRBRect(0, 0, w, h), r.fillPaint)
+  if (shader) {
+    r.fillPaint.setShader(shader)
+    canvas.drawOval(rect, r.fillPaint)
+    r.fillPaint.setShader(null)
+    shader.delete()
+  } else {
+    r.fillPaint.setColor(glyphFillColor(ck, data.glyphType, style))
+    canvas.drawOval(rect, r.fillPaint)
+  }
 
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
   r.strokePaint.setColor(glyphBorder(ck, data.glyphType, style))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.entityBorderWidth)
-  canvas.drawOval(ck.LTRBRect(0, 0, w, h), r.strokePaint)
+  canvas.drawOval(rect, r.strokePaint)
 }
 
 const GLYPH_PAINTERS: Record<PathwayGlyphType, typeof paintMacromolecule> = {

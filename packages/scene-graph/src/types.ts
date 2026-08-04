@@ -7,6 +7,7 @@ export interface SceneGraphEvents {
   'node:deleted': (id: string) => void
   'node:reparented': (nodeId: string, oldParentId: string | null, newParentId: string) => void
   'node:reordered': (nodeId: string, parentId: string, index: number) => void
+  'batch:completed': () => void
 }
 
 export type SceneGraphEventHandlers = Partial<{
@@ -16,6 +17,7 @@ export type SceneGraphEventHandlers = Partial<{
   deleted: (id: string) => void
   reparented: (nodeId: string, oldParentId: string | null, newParentId: string) => void
   reordered: (nodeId: string, parentId: string, index: number) => void
+  batchCompleted: () => void
 }>
 
 export type DocumentColorSpace = 'srgb' | 'display-p3'

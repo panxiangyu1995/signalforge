@@ -1,15 +1,63 @@
-import type { Canvas } from 'canvaskit-wasm'
+import type { Canvas, CanvasKit, ImageFilter } from 'canvaskit-wasm'
 
-import { type SceneNode, type SceneGraph, getPathwayData } from '@signal-forge/scene-graph'
+import { type SceneNode, type SceneGraph, type Vector, getPathwayData, type PathwayNodeData } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
 import { paintPathwayGlyph } from './glyphs'
 import { paintPathwayProcess } from './processes'
 import { paintPathwayArc } from './arcs'
-import { paintPathwayLabel, paintCompartmentLabel, paintStateVariables, paintCloneMarker } from './labels'
-import { SBGN_STYLE, type PathwayStyle } from './constants'
+import { paintPathwayLabel, paintCompartmentLabel, paintStateVariables, paintCloneMarker, paintUnitOfInformation } from './labels'
+import { SBGN_STYLE, PUBLICATION_STYLE, type PathwayStyle } from './constants'
 import { hexToCKColor } from './utils'
+import { inferMembraneType, paintMembraneLine } from './membrane'
+
+const MULTIMER_OFFSETS: Record<string, Vector> = {
+  macromolecule: { x: 12, y: 12 },
+  simple_chemical: { x: 5, y: 5 },
+  complex: { x: 16, y: 16 },
+  nucleic_acid_feature: { x: 12, y: 12 },
+  phenotype: { x: 8, y: 8 },
+  perturbation: { x: 8, y: 8 },
+  source_sink: { x: 5, y: 5 },
+  unspecified_entity: { x: 8, y: 8 },
+}
+
+export type CompartmentType =
+  | 'extracellular' | 'membrane' | 'cytoplasm' | 'nucleus'
+  | 'mitochondria' | 'endoplasmic_reticulum' | 'golgi' | 'default'
+
+export function inferCompartmentType(name: string): CompartmentType {
+  const lower = name.toLowerCase()
+  if (lower.includes('extracellul')) return 'extracellular'
+  if (lower.includes('nuclear') || lower.includes('nucleus')) return 'nucleus'
+  if (lower.includes('mitochondr')) return 'mitochondria'
+  if (lower.includes('endoplasm') || lower === 'er') return 'endoplasmic_reticulum'
+  if (lower.includes('golgi')) return 'golgi'
+  if (lower.includes('membrane') || lower.includes('plasma')) return 'membrane'
+  if (lower.includes('cytoplasm') || lower.includes('cytosol')) return 'cytoplasm'
+  return 'default'
+}
+
+function applyDropShadow(
+  ck: CanvasKit,
+  r: SkiaRenderer,
+  spec: { readonly offsetX: number; readonly offsetY: number; readonly blur: number; readonly color: string }
+): ImageFilter {
+  const color = hexToCKColor(ck, spec.color)
+  const filter = ck.ImageFilter.MakeDropShadow(
+    spec.offsetX, spec.offsetY,
+    spec.blur, spec.blur,
+    color,
+    null
+  )
+  r.fillPaint.setImageFilter(filter)
+  return filter
+}
+
+function clearDropShadow(r: SkiaRenderer): void {
+  r.fillPaint.setImageFilter(null)
+}
 
 export function renderPathwayGlyph(
   r: SkiaRenderer,
@@ -25,7 +73,37 @@ export function renderPathwayGlyph(
   r.fillPaint.setStyle(ck.PaintStyle.Fill)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
 
+  if (data.multimer) {
+    const offset = MULTIMER_OFFSETS[data.glyphType ?? 'unspecified_entity'] ?? { x: 8, y: 8 }
+    canvas.save()
+    canvas.translate(offset.x, offset.y)
+    let multimerFilter: ImageFilter | null = null
+    if (style === 'publication') {
+      multimerFilter = applyDropShadow(ck, r, PUBLICATION_STYLE.dropShadow)
+    }
+    paintPathwayGlyph(ck, canvas, node, data, style, r)
+    if (multimerFilter) {
+      clearDropShadow(r)
+      multimerFilter.delete()
+    }
+    canvas.restore()
+  }
+
+  let mainFilter: ImageFilter | null = null
+  if (style === 'publication') {
+    mainFilter = applyDropShadow(ck, r, PUBLICATION_STYLE.dropShadow)
+  }
+
   paintPathwayGlyph(ck, canvas, node, data, style, r)
+
+  if (mainFilter) {
+    clearDropShadow(r)
+    mainFilter.delete()
+  }
+
+  if (data.activeState) {
+    paintActiveStateBorder(ck, canvas, node, data, r)
+  }
 
   if (data.cloneMarker) {
     paintCloneMarker(ck, canvas, node, data, r)
@@ -34,6 +112,42 @@ export function renderPathwayGlyph(
   paintPathwayLabel(ck, canvas, node, data, r)
 
   paintStateVariables(ck, canvas, node, data, r)
+
+  if (data.unitOfInformation && data.unitOfInformation.length > 0) {
+    paintUnitOfInformation(ck, canvas, node, data, r)
+  }
+}
+
+function paintActiveStateBorder(
+  ck: CanvasKit,
+  canvas: Canvas,
+  node: SceneNode,
+  data: PathwayNodeData,
+  r: SkiaRenderer
+): void {
+  const pad = SBGN_STYLE.activePadding
+  const expandedNode: SceneNode = {
+    ...node,
+    x: node.x - pad,
+    y: node.y - pad,
+    width: node.width + pad * 2,
+    height: node.height + pad * 2
+  }
+  const expandedData: PathwayNodeData = { ...data, stateVariables: undefined, activeState: undefined }
+  canvas.save()
+  canvas.translate(-pad, -pad)
+
+  r.strokePaint.setStyle(ck.PaintStyle.Stroke)
+  r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
+  r.strokePaint.setStrokeWidth(SBGN_STYLE.defaultBorderWidth)
+  const dashEffect = ck.PathEffect.MakeDash([...SBGN_STYLE.activeDashPattern], 0)
+  if (dashEffect) {
+    r.strokePaint.setPathEffect(dashEffect)
+  }
+  paintPathwayGlyph(ck, canvas, expandedNode, expandedData, 'sbgn', r)
+  r.strokePaint.setPathEffect(null)
+  if (dashEffect) dashEffect.delete()
+  canvas.restore()
 }
 
 export function renderPathwayProcess(
@@ -71,10 +185,7 @@ export function renderPathwayArc(
   r.fillPaint.setStyle(ck.PaintStyle.Fill)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
 
-  canvas.save()
-  canvas.translate(-node.x, -node.y)
   paintPathwayArc(ck, canvas, node, data, graph, style, r)
-  canvas.restore()
 }
 
 export function renderCompartment(
@@ -92,7 +203,7 @@ export function renderCompartment(
     const x0 = w * 0.03
     const x1 = w * 0.97
     const y0 = h * 0.03
-    const y1 = h * 0.97
+    const _y1 = h * 0.97
 
     path.moveTo(w * 0.05, y0)
     path.lineTo(w * 0.25, 0)
@@ -107,21 +218,73 @@ export function renderCompartment(
     path.quadTo(x0, h * 0.5, x0, h * 0.25)
     path.close()
 
-    const fillColor = style === 'publication'
-      ? hexToCKColor(ck, 'rgba(0, 0, 0, 0.03)')
-      : hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor)
-    r.fillPaint.setColor(fillColor)
-    r.fillPaint.setAlphaf(0.15)
-    canvas.drawPath(path, r.fillPaint)
-    r.fillPaint.setAlphaf(1)
+    r.fillPaint.setStyle(ck.PaintStyle.Fill)
 
-    r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.compartmentBorderWidth)
-    r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    canvas.drawPath(path, r.strokePaint)
+    if (style === 'publication') {
+      const compType = inferCompartmentType(node.name)
+      const grad = PUBLICATION_STYLE.compartmentGradients[compType]
+      if (grad) {
+        const shader = ck.Shader.MakeLinearGradient(
+          [0, 0], [0, h],
+          [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
+          [0, 1],
+          ck.TileMode.Clamp
+        )
+        if (shader) {
+          r.fillPaint.setShader(shader)
+          canvas.drawPath(path, r.fillPaint)
+          r.fillPaint.setShader(null)
+          shader.delete()
+        } else {
+          r.fillPaint.setColor(hexToCKColor(ck, PUBLICATION_STYLE.compartmentFills[compType] ?? PUBLICATION_STYLE.compartmentFills.default))
+          canvas.drawPath(path, r.fillPaint)
+        }
+      } else {
+        const fillColor = hexToCKColor(ck, PUBLICATION_STYLE.compartmentFills[compType] ?? PUBLICATION_STYLE.compartmentFills.default)
+        r.fillPaint.setColor(fillColor)
+        canvas.drawPath(path, r.fillPaint)
+      }
+
+      const compShadow = ck.ImageFilter.MakeDropShadow(
+        PUBLICATION_STYLE.compartmentShadow.offsetX,
+        PUBLICATION_STYLE.compartmentShadow.offsetY,
+        PUBLICATION_STYLE.compartmentShadow.blur,
+        PUBLICATION_STYLE.compartmentShadow.blur,
+        hexToCKColor(ck, PUBLICATION_STYLE.compartmentShadow.color),
+        null
+      )
+      r.strokePaint.setStyle(ck.PaintStyle.Stroke)
+      r.strokePaint.setColor(hexToCKColor(ck, '#888'))
+      r.strokePaint.setStrokeWidth(1.5)
+      r.strokePaint.setImageFilter(compShadow)
+      canvas.drawPath(path, r.strokePaint)
+      r.strokePaint.setImageFilter(null)
+      compShadow.delete()
+    } else {
+      const fillColor = hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor)
+      r.fillPaint.setColor(fillColor)
+      r.fillPaint.setAlphaf(0.15)
+      canvas.drawPath(path, r.fillPaint)
+      r.fillPaint.setAlphaf(1)
+
+      r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
+      r.strokePaint.setStrokeWidth(SBGN_STYLE.compartmentBorderWidth)
+      r.strokePaint.setStyle(ck.PaintStyle.Stroke)
+      canvas.drawPath(path, r.strokePaint)
+    }
   } finally {
     path.delete()
   }
 
   paintCompartmentLabel(ck, canvas, node, r)
+
+  if (style === 'publication') {
+    const membraneType = inferMembraneType(node.name)
+    if (membraneType) {
+      canvas.save()
+      canvas.translate(node.width * 0.05, 0)
+      paintMembraneLine(ck, canvas, node, membraneType, r)
+      canvas.restore()
+    }
+  }
 }

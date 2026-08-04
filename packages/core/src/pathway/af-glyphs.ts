@@ -27,12 +27,12 @@ export function paintAFMacromolecule(
 
   r.fillPaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor))
   r.fillPaint.setStyle(ck.PaintStyle.Fill)
-  canvas.drawRRect(ck.RRect(ck.LTRBRect(0, 0, w, h), cr, cr, cr, cr), r.fillPaint)
+  canvas.drawRRect(ck.RRectXY(ck.LTRBRect(0, 0, w, h), cr, cr), r.fillPaint)
 
   r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.defaultBorderWidth)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-  canvas.drawRRect(ck.RRect(ck.LTRBRect(0, 0, w, h), cr, cr, cr, cr), r.strokePaint)
+  canvas.drawRRect(ck.RRectXY(ck.LTRBRect(0, 0, w, h), cr, cr), r.strokePaint)
 }
 
 export function paintAFSimpleChemical(
@@ -49,12 +49,12 @@ export function paintAFSimpleChemical(
 
   r.fillPaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor))
   r.fillPaint.setStyle(ck.PaintStyle.Fill)
-  canvas.drawRRect(ck.RRect(ck.LTRBRect(0, 0, w, h), cr, cr, cr, cr), r.fillPaint)
+  canvas.drawRRect(ck.RRectXY(ck.LTRBRect(0, 0, w, h), cr, cr), r.fillPaint)
 
   r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.entityBorderWidth)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-  canvas.drawRRect(ck.RRect(ck.LTRBRect(0, 0, w, h), cr, cr, cr, cr), r.strokePaint)
+  canvas.drawRRect(ck.RRectXY(ck.LTRBRect(0, 0, w, h), cr, cr), r.strokePaint)
 }
 
 export function paintAFPositiveInfluence(

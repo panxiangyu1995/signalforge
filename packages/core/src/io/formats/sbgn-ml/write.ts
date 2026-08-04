@@ -89,7 +89,7 @@ function collectNodes(graph: SceneGraph, nodeId: string, lines: string[], indent
     lines.push(`${pad}</glyph>`)
   } else if (node.type === 'PATHWAY_GLYPH' && data?.glyphType) {
     const cls = GLYPH_TYPE_TO_CLASS[data.glyphType] ?? 'unspecified entity'
-    const parent = graph.getNode(graph.getParentId(nodeId) ?? '')
+    const parent = node.parentId ? graph.getNode(node.parentId) : undefined
     const compRef = parent?.type === 'COMPARTMENT' ? ` compartmentRef="${escapeXml(parent.id)}"` : ''
     lines.push(`${pad}<glyph id="${escapeXml(node.id)}" class="${cls}"${compRef}>`)
     lines.push(`${pad}  <bbox x="${node.x}" y="${node.y}" w="${node.width}" h="${node.height}" />`)
@@ -109,7 +109,7 @@ function collectNodes(graph: SceneGraph, nodeId: string, lines: string[], indent
     lines.push(`${pad}</glyph>`)
   } else if (node.type === 'PATHWAY_PROCESS' && data?.processType) {
     const cls = PROCESS_TYPE_TO_CLASS[data.processType] ?? 'process'
-    const parent = graph.getNode(graph.getParentId(nodeId) ?? '')
+    const parent = node.parentId ? graph.getNode(node.parentId) : undefined
     const compRef = parent?.type === 'COMPARTMENT' ? ` compartmentRef="${escapeXml(parent.id)}"` : ''
     lines.push(`${pad}<glyph id="${escapeXml(node.id)}" class="${cls}"${compRef}>`)
     lines.push(`${pad}  <bbox x="${node.x}" y="${node.y}" w="${node.width}" h="${node.height}" />`)

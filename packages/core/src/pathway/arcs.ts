@@ -1,7 +1,6 @@
 import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 
-import type { SceneNode, SceneGraph } from '@signal-forge/scene-graph'
-import { type PathwayNodeData, type PathwayArcType, getPathwayData } from '@signal-forge/scene-graph'
+import { type SceneNode, type SceneGraph, type Vector, type PathwayNodeData, type PathwayArcType, getPathwayData } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
@@ -25,8 +24,8 @@ function arcLineColor(ck: CanvasKit, arcType: PathwayArcType | undefined, style:
 }
 
 function directionVector(
-  from: { x: number; y: number },
-  to: { x: number; y: number }
+  from: Vector,
+  to: Vector
 ): { dx: number; dy: number; len: number } {
   const dx = to.x - from.x
   const dy = to.y - from.y
@@ -216,7 +215,9 @@ function paintArcDecoration(
   targetY: number,
   dirX: number,
   dirY: number,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  sourceX?: number,
+  sourceY?: number
 ): void {
   switch (arcType) {
     case 'production':
@@ -224,8 +225,10 @@ function paintArcDecoration(
       break
     case 'equivalence': {
       paintArrowhead(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE, r)
-      const offset = ARROW_SIZE * 1.2
-      paintArrowhead(ck, canvas, targetX - dirX * offset, targetY - dirY * offset, dirX, dirY, ARROW_SIZE, r)
+      if (sourceX !== undefined && sourceY !== undefined) {
+        const revDir = directionVector({ x: targetX, y: targetY }, { x: sourceX, y: sourceY })
+        paintArrowhead(ck, canvas, sourceX, sourceY, revDir.dx, revDir.dy, ARROW_SIZE, r)
+      }
       break
     }
     case 'inhibition':
@@ -255,12 +258,8 @@ function paintArcDecoration(
     case 'trigger':
       paintTriggerDecoration(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE, r)
       break
-    case 'consumption': {
-      r.fillPaint.setColor(hexToCKColor(ck, SBGN_STYLE.edgeLineColor))
-      r.fillPaint.setStyle(ck.PaintStyle.Fill)
-      canvas.drawCircle(targetX, targetY, 3, r.fillPaint)
+    case 'consumption':
       break
-    }
     case 'logic_and': {
       const cx = targetX - dirX * (CIRCLE_RADIUS + 2)
       const cy = targetY - dirY * (CIRCLE_RADIUS + 2)
@@ -279,12 +278,8 @@ function paintArcDecoration(
     case 'logic_not':
       paintTBar(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE, r)
       break
-    default: {
-      r.fillPaint.setColor(hexToCKColor(ck, SBGN_STYLE.edgeLineColor))
-      r.fillPaint.setStyle(ck.PaintStyle.Fill)
-      canvas.drawCircle(targetX, targetY, 3, r.fillPaint)
+    default:
       break
-    }
   }
 }
 
@@ -300,11 +295,11 @@ export function paintPathwayArc(
   canvas.save()
   const sourceId = data.sourceId
   const targetId = data.targetId
-  if (!sourceId || !targetId) return
+  if (!sourceId || !targetId) { canvas.restore(); return }
 
   const sourceNode = graph.getNode(sourceId)
   const targetNode = graph.getNode(targetId)
-  if (!sourceNode || !targetNode) return
+  if (!sourceNode || !targetNode) { canvas.restore(); return }
 
   const sourceAbs = graph.getAbsolutePosition(sourceId)
   const targetAbs = graph.getAbsolutePosition(targetId)
@@ -340,7 +335,12 @@ export function paintPathwayArc(
     ty = targetAbs.y + targetNode.height / 2
   }
 
-  const dir = directionVector({ x: sx, y: sy }, { x: tx, y: ty })
+  let dir = directionVector({ x: sx, y: sy }, { x: tx, y: ty })
+
+  if (data.bendPoints && data.bendPoints.length > 0) {
+    const lastBend = data.bendPoints[data.bendPoints.length - 1]
+    dir = directionVector({ x: lastBend.x, y: lastBend.y }, { x: tx, y: ty })
+  }
 
   const lineColor = arcLineColor(ck, data.arcType, style)
   r.strokePaint.setColor(lineColor)
@@ -366,7 +366,7 @@ export function paintPathwayArc(
   if (data.arcType) {
     r.fillPaint.setColor(lineColor)
     r.strokePaint.setColor(lineColor)
-    paintArcDecoration(ck, canvas, data.arcType, tx, ty, dir.dx, dir.dy, r)
+    paintArcDecoration(ck, canvas, data.arcType, tx, ty, dir.dx, dir.dy, r, sx, sy)
   }
   canvas.restore()
 }

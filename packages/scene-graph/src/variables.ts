@@ -28,7 +28,7 @@ export function removeVariable(graph: SceneGraph, id: string): void {
       string,
       string
     >
-    graph.emitter.emit('node:updated', node.id, { boundVariables: { ...node.boundVariables } })
+    if (!graph.eventsMuted) graph.emitter.emit('node:updated', node.id, { boundVariables: { ...node.boundVariables } })
     markBoundVariablesOverrideOnInstance(graph, node.id)
   }
 }
@@ -322,7 +322,7 @@ export function bindVariable(
   }
 
   node.boundVariables = { ...node.boundVariables, [field]: variableId }
-  graph.emitter.emit('node:updated', nodeId, { boundVariables: { ...node.boundVariables } })
+  if (!graph.eventsMuted) graph.emitter.emit('node:updated', nodeId, { boundVariables: { ...node.boundVariables } })
   markBoundVariablesOverrideOnInstance(graph, nodeId)
 }
 
@@ -331,7 +331,7 @@ export function unbindVariable(graph: SceneGraph, nodeId: string, field: string)
   if (!node) return
   if (!(field in node.boundVariables)) return
   node.boundVariables = omit(node.boundVariables, [field])
-  graph.emitter.emit('node:updated', nodeId, { boundVariables: { ...node.boundVariables } })
+  if (!graph.eventsMuted) graph.emitter.emit('node:updated', nodeId, { boundVariables: { ...node.boundVariables } })
   markBoundVariablesOverrideOnInstance(graph, nodeId)
 }
 

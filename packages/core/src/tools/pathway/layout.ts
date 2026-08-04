@@ -20,7 +20,7 @@ export const autoLayoutPathway = defineTool({
   },
   execute: (figma, args) => {
     const pageId = args.page_id ?? figma.currentPage.id
-    const direction = args.direction ?? 'top-bottom'
+    const direction = (args.direction ?? 'top-bottom') as 'top-bottom' | 'left-right'
     const spacing = args.spacing ?? 60
     const algorithm = args.algorithm ?? 'hierarchical'
 

@@ -48,9 +48,10 @@ After completing a pathway, give a **2-3 line** summary: number of compartments,
 
 1. **Arcs connect entity ↔ process, NOT entity ↔ entity.** A production arc goes FROM a process TO an entity. A consumption arc goes FROM an entity TO a process. Inhibition/catalysis/stimulation arcs go FROM an entity TO a process.
 2. **Create compartments first**, then entities inside them, then processes, then arcs.
-3. **Use `create_pathway`** for complete diagrams. Use `add_entity`/`add_process`/`add_arc` for incremental additions.
-4. **After creation, call `auto_layout_pathway`** to arrange nodes in hierarchical layout.
+3. **Use `begin_pathway` → `add_compartment`/`add_entity`/`add_process`/`add_arc` × N → `end_pathway`** for complete diagrams. Use `create_pathway` only for simple diagrams (≤5 nodes). Use individual `add_*` tools for incremental additions to existing diagrams.
+4. **Do NOT specify x/y coordinates** — layout is computed automatically by `end_pathway` or `auto_layout_pathway`. Omit `x`, `y`, `width`, `height` from all specs.
 5. **Entity sizes:** macromolecule ~96×48, simple_chemical ~48×48, process ~24×24, compartment ~800×600.
+6. **Use `source`/`target` names** (not IDs) in `add_arc` — e.g. `source: "JAK2", target: "STAT3 phosphorylation"`.
 
 ## Visual Rendering Rules
 
@@ -61,12 +62,12 @@ After completing a pathway, give a **2-3 line** summary: number of compartments,
 5. **Arc routing:** Default signal flow is top-to-bottom. Consumption arcs go downward (entity → process). Production arcs go downward (process → entity). Modulation/catalysis/inhibition arcs come from the side. Use `auto_layout_pathway(direction="left-right")` for horizontal flow.
 6. **State variable formatting:** Use "VALUE@VARIABLE" convention, e.g., "P@Y705" for phosphorylation at tyrosine 705, "Ub" for ubiquitination. Set with `set_state_variable(node_id, variable="P@Y705")`.
 7. **Unit of information:** Add biochemical annotations with `set_unit_of_information(node_id, text="MT:mtDNA")` or `set_unit_of_information(node_id, text="charge:2+")`.
-8. **Publication style:** Toggle semantic color coding with `set_pathway_style(style="publication")`. This colors entities by type (blue=macromolecule, red=simple_chemical, green=nucleic_acid_feature, purple=complex) and arcs by function (blue=activation, red=inhibition, green=catalysis). Default is "sbgn" (strict gray).
+8. **Publication style:** The default rendering style is "publication" with semantic color coding — entities colored by type (blue=macromolecule, pink=simple_chemical, green=nucleic_acid_feature, purple=complex, teal=perturbation, amber=phenotype), gradient fills for 3D depth, and tinted borders. Arcs are colored by function (blue=activation/stimulation, red=inhibition, green=catalysis). Compartments have type-inferred gradient backgrounds and membrane lines. Use `set_pathway_style(style="sbgn")` only if strict gray SBGN styling is needed.
 
 ## Workflow
 
 1. **Query** — `query_pathway_db` to look up pathway data from Reactome/Pathway Commons
-2. **Create** — `create_pathway` for complete diagrams; `add_entity`/`add_process`/`add_arc` for incremental changes
+2. **Create** — `begin_pathway` → `add_compartment`/`add_entity`/`add_process`/`add_arc` × N → `end_pathway` for complete diagrams; individual `add_*` tools for incremental changes
 3. **Layout** — `auto_layout_pathway` with `algorithm="hierarchical"` (default) or `algorithm="elk"` (when available)
 4. **Annotate** — `set_state_variable` for PTMs, `annotate_pathway` for literature references (DOI, PMID)
 5. **Validate** — `validate_pathway` to check SBGN PD compliance
@@ -76,7 +77,7 @@ After completing a pathway, give a **2-3 line** summary: number of compartments,
 
 - `import_sbgn_ml` — import from SBGN-ML files (exchange format with Newt, CellDesigner, PathVisio)
 - `export_sbgn_ml` — export to SBGN-ML for downstream analysis
-- `set_pathway_style(style="publication")` — switch to semantic color coding for publication figures
+- `set_pathway_style(style="sbgn")` — switch to strict gray SBGN styling (publication style is default)
 
 ## Sketch-to-Pathway
 
@@ -115,40 +116,40 @@ After creating or modifying a pathway, run `validate_pathway` to check:
 
 ## Step budget
 
-You have **50 steps** per message. Typical workflow: 1 query + 1 create_pathway + 1 auto_layout + 1 validate = 4 steps.
+You have **100 steps** per message. Typical workflow: 1 query + 1 begin_pathway + N add_* + 1 end_pathway + 1 auto_layout + 1 validate = 5+N steps.
 
 ## Example: JAK-STAT Signaling
 
 ```
-create_pathway(
-  compartments: [{"name":"Cytoplasm","x":0,"y":0,"width":800,"height":400},{"name":"Nucleus","x":0,"y":400,"width":800,"height":300}],
-  entities: [
-    {"name":"JAK2","glyph_type":"macromolecule","x":100,"y":80,"compartment":"Cytoplasm"},
-    {"name":"STAT3","glyph_type":"macromolecule","x":100,"y":200,"compartment":"Cytoplasm"},
-    {"name":"pSTAT3","glyph_type":"macromolecule","x":100,"y":450,"compartment":"Nucleus"},
-    {"name":"SOCS3","glyph_type":"macromolecule","x":400,"y":200,"compartment":"Cytoplasm"},
-    {"name":"ATP","glyph_type":"simple_chemical","x":300,"y":80,"compartment":"Cytoplasm"},
-    {"name":"Target Gene","glyph_type":"nucleic_acid_feature","x":400,"y":450,"compartment":"Nucleus"}
-  ],
-  processes: [
-    {"name":"JAK2 activation","process_type":"process","x":250,"y":150,"compartment":"Cytoplasm"},
-    {"name":"STAT3 phosphorylation","process_type":"process","x":250,"y":250,"compartment":"Cytoplasm"},
-    {"name":"STAT3 dimerization","process_type":"process","x":250,"y":350},
-    {"name":"Nuclear translocation","process_type":"transport","x":250,"y":420},
-    {"name":"Transcription","process_type":"process","x":350,"y":470,"compartment":"Nucleus"},
-    {"name":"SOCS3 inhibition","process_type":"process","x":450,"y":150,"compartment":"Cytoplasm"}
-  ],
-  arcs: [
-    {"source":"JAK2","target":"JAK2 activation","arc_type":"consumption"},
-    {"source":"ATP","target":"JAK2 activation","arc_type":"consumption"},
-    {"source":"JAK2 activation","target":"JAK2","arc_type":"production"},
-    {"source":"JAK2","target":"STAT3 phosphorylation","arc_type":"catalysis"},
-    {"source":"STAT3","target":"STAT3 phosphorylation","arc_type":"consumption"},
-    {"source":"STAT3 phosphorylation","target":"pSTAT3","arc_type":"production"},
-    {"source":"SOCS3","target":"SOCS3 inhibition","arc_type":"consumption"},
-    {"source":"SOCS3 inhibition","target":"JAK2","arc_type":"inhibition"},
-    {"source":"pSTAT3","target":"Transcription","arc_type":"catalysis"},
-    {"source":"Transcription","target":"Target Gene","arc_type":"production"}
-  ]
-)
+begin_pathway()
+
+add_compartment(name="Cytoplasm")
+add_compartment(name="Nucleus")
+
+add_entity(name="JAK2", glyph_type="macromolecule", compartment="Cytoplasm")
+add_entity(name="STAT3", glyph_type="macromolecule", compartment="Cytoplasm")
+add_entity(name="pSTAT3", glyph_type="macromolecule", compartment="Nucleus")
+add_entity(name="SOCS3", glyph_type="macromolecule", compartment="Cytoplasm")
+add_entity(name="ATP", glyph_type="simple_chemical", compartment="Cytoplasm")
+add_entity(name="Target Gene", glyph_type="nucleic_acid_feature", compartment="Nucleus")
+
+add_process(name="JAK2 activation", process_type="process", compartment="Cytoplasm")
+add_process(name="STAT3 phosphorylation", process_type="process", compartment="Cytoplasm")
+add_process(name="STAT3 dimerization", process_type="process")
+add_process(name="Nuclear translocation", process_type="transport")
+add_process(name="Transcription", process_type="process", compartment="Nucleus")
+add_process(name="SOCS3 inhibition", process_type="process", compartment="Cytoplasm")
+
+add_arc(source="JAK2", target="JAK2 activation", arc_type="consumption")
+add_arc(source="ATP", target="JAK2 activation", arc_type="consumption")
+add_arc(source="JAK2 activation", target="JAK2", arc_type="production")
+add_arc(source="JAK2", target="STAT3 phosphorylation", arc_type="catalysis")
+add_arc(source="STAT3", target="STAT3 phosphorylation", arc_type="consumption")
+add_arc(source="STAT3 phosphorylation", target="pSTAT3", arc_type="production")
+add_arc(source="SOCS3", target="SOCS3 inhibition", arc_type="consumption")
+add_arc(source="SOCS3 inhibition", target="JAK2", arc_type="inhibition")
+add_arc(source="pSTAT3", target="Transcription", arc_type="catalysis")
+add_arc(source="Transcription", target="Target Gene", arc_type="production")
+
+end_pathway()
 ```

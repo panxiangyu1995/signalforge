@@ -89,6 +89,7 @@ export class SceneGraph {
   private absPosCache = new Map<string, Vector>()
   private previewMutationDepth = 0
   private sourceMetadataPreservationDepth = 0
+  private _eventsMuted = 0
   positionPreviewVersion = 0
   instanceIndex = new Map<string, Set<string>>()
 
@@ -120,6 +121,22 @@ export class SceneGraph {
   }
   onNodeEvents(handlers: SceneGraphEventHandlers): () => void {
     return bindNodeEvents(this.emitter, handlers)
+  }
+
+  muteEvents(): void {
+    this._eventsMuted++
+  }
+
+  unmuteEvents(): void {
+    if (this._eventsMuted <= 0) return
+    this._eventsMuted--
+    if (this._eventsMuted === 0) {
+      this.emitter.emit('batch:completed')
+    }
+  }
+
+  get eventsMuted(): boolean {
+    return this._eventsMuted > 0
   }
 
   countDescendants(nodeId: string): number {
@@ -286,7 +303,7 @@ export class SceneGraph {
       }
       set.add(node.id)
     }
-    this.emitter.emit('node:created', node)
+    if (!this._eventsMuted) this.emitter.emit('node:created', node)
     return node
   }
   createNode(type: NodeType, parentId: string, overrides: Partial<SceneNode> = {}): SceneNode {
@@ -369,7 +386,7 @@ export class SceneGraph {
   }
   updateNodePreview(id: string, changes: Partial<SceneNode>): void {
     const appliedChanges = updateNodePreview(this, id, changes)
-    if (appliedChanges) this.emitter.emit('node:previewUpdated', id, appliedChanges)
+    if (appliedChanges && !this._eventsMuted) this.emitter.emit('node:previewUpdated', id, appliedChanges)
   }
   updateNode(id: string, changes: Partial<SceneNode>): void {
     if (this.previewMutationDepth > 0) {
@@ -417,7 +434,7 @@ export class SceneGraph {
     Object.assign(node, changes)
     if (changes.fills) removeStaleBindings(node, 'fills', changes)
     if (changes.strokes) removeStaleBindings(node, 'strokes', changes)
-    this.emitter.emit('node:updated', id, changes)
+    if (!this._eventsMuted) this.emitter.emit('node:updated', id, changes)
   }
 
   reparentNode(nodeId: string, newParentId: string): void {
@@ -450,7 +467,7 @@ export class SceneGraph {
     node.x = absPos.x - newParentAbs.x
     node.y = absPos.y - newParentAbs.y
 
-    this.emitter.emit('node:reparented', nodeId, oldParentId, newParentId)
+    if (!this._eventsMuted) this.emitter.emit('node:reparented', nodeId, oldParentId, newParentId)
   }
 
   reorderChild(nodeId: string, parentId: string, insertIndex: number): void {
@@ -479,7 +496,7 @@ export class SceneGraph {
     idx = Math.min(idx, newParent.childIds.length)
     newParent.childIds.splice(idx, 0, nodeId)
 
-    this.emitter.emit('node:reordered', nodeId, parentId, idx)
+    if (!this._eventsMuted) this.emitter.emit('node:reordered', nodeId, parentId, idx)
   }
 
   insertChildAt(childId: string, parentId: string, index: number): void {
@@ -494,7 +511,7 @@ export class SceneGraph {
     const node = this.getNode(childId)
     if (node) node.parentId = parentId
     this.clearAbsPosCache()
-    this.emitter.emit('node:reordered', childId, parentId, index)
+    if (!this._eventsMuted) this.emitter.emit('node:reordered', childId, parentId, index)
   }
 
   deleteNode(id: string): void {
@@ -516,7 +533,7 @@ export class SceneGraph {
       this.instanceIndex.get(node.componentId)?.delete(id)
     }
     this.nodes.delete(id)
-    this.emitter.emit('node:deleted', id)
+    if (!this._eventsMuted) this.emitter.emit('node:deleted', id)
   }
 
   hitTest(px: number, py: number, scopeId?: string): SceneNode | null {

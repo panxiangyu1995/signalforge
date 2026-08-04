@@ -154,6 +154,21 @@
       "types": "./dist/layout.d.ts",
       "import": "./dist/layout.js",
       "default": "./dist/layout.js"
+    },
+    "./pathway": {
+      "types": "./dist/pathway/index.d.ts",
+      "import": "./dist/pathway/index.js",
+      "default": "./dist/pathway/index.js"
+    },
+    "./pathway/layout/hierarchical": {
+      "types": "./dist/pathway/layout/hierarchical.d.ts",
+      "import": "./dist/pathway/layout/hierarchical.js",
+      "default": "./dist/pathway/layout/hierarchical.js"
+    },
+    "./pathway/layout/orthogonal": {
+      "types": "./dist/pathway/layout/orthogonal.d.ts",
+      "import": "./dist/pathway/layout/orthogonal.js",
+      "default": "./dist/pathway/layout/orthogonal.js"
     }
   },
   "publishConfig": {

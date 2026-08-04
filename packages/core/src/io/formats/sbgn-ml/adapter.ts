@@ -37,11 +37,11 @@ export const sbgnmlFormat: IOFormatAdapter = {
   async writeDocument(graph: SceneGraph) {
     const xml = writeSbgnMl(graph)
     const data = new TextEncoder().encode(xml)
-    return { data, fileName: 'diagram.sbgn', mimeType: 'application/xml' }
+    return { data, fileName: 'diagram.sbgn', mimeType: 'application/xml', format: 'sbgn-ml', extension: 'sbgn' }
   },
   async exportContent(request) {
     const xml = writeSbgnMl(request.graph)
     const data = new TextEncoder().encode(xml)
-    return { data, fileName: 'diagram.sbgn', mimeType: 'application/xml' }
+    return { data, fileName: 'diagram.sbgn', mimeType: 'application/xml', format: 'sbgn-ml', extension: 'sbgn' }
   },
 }

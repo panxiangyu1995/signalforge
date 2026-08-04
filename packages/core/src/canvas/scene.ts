@@ -176,6 +176,20 @@ function renderChildren(
   absY: number
 ): void {
   if (node.type === 'BOOLEAN_OPERATION') return
+  let childIds = node.childIds
+  if (node.type === 'COMPARTMENT' && childIds.length > 1) {
+    const arcs: string[] = []
+    const entities: string[] = []
+    const rest: string[] = []
+    for (const cid of childIds) {
+      const c = graph.getNode(cid)
+      if (!c) { rest.push(cid); continue }
+      if (c.type === 'PATHWAY_ARC') arcs.push(cid)
+      else if (c.type === 'PATHWAY_GLYPH' || c.type === 'PATHWAY_PROCESS') entities.push(cid)
+      else rest.push(cid)
+    }
+    childIds = [...rest, ...arcs, ...entities]
+  }
   const isClippableContainer =
     node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
   if (isClippableContainer && node.clipsContent && node.childIds.length > 0) {

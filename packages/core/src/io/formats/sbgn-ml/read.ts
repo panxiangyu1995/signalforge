@@ -253,6 +253,7 @@ export async function readSbgnMlAsync(xml: string): Promise<SceneGraph> {
 function buildSceneGraph(glyphs: SbgnGlyph[], arcs: SbgnArc[]): SceneGraph {
   const graph = new SceneGraph()
   const page = graph.getPages()[0]
+  const pageId = page.id
   const idMap = new Map<string, string>()
 
   const compartments = glyphs.filter(g => g.class === 'compartment')
@@ -263,7 +264,7 @@ function buildSceneGraph(glyphs: SbgnGlyph[], arcs: SbgnArc[]): SceneGraph {
   )
 
   for (const spec of compartments) {
-    const node = graph.createNode('COMPARTMENT', page, {
+    const node = graph.createNode('COMPARTMENT', pageId, {
       name: spec.label ?? spec.id,
       x: spec.x,
       y: spec.y,
@@ -277,7 +278,7 @@ function buildSceneGraph(glyphs: SbgnGlyph[], arcs: SbgnArc[]): SceneGraph {
     const glyphType = GLYPH_CLASS_MAP[spec.class]
     const parentId = spec.compartment ? idMap.get(spec.compartment) : undefined
 
-    const node = graph.createNode('PATHWAY_GLYPH', parentId ?? page, {
+    const node = graph.createNode('PATHWAY_GLYPH', parentId ?? pageId, {
       name: spec.label ?? spec.id,
       x: spec.x,
       y: spec.y,
@@ -297,7 +298,7 @@ function buildSceneGraph(glyphs: SbgnGlyph[], arcs: SbgnArc[]): SceneGraph {
     const processType = PROCESS_CLASS_MAP[spec.class]
     const parentId = spec.compartment ? idMap.get(spec.compartment) : undefined
 
-    const node = graph.createNode('PATHWAY_PROCESS', parentId ?? page, {
+    const node = graph.createNode('PATHWAY_PROCESS', parentId ?? pageId, {
       name: spec.label ?? spec.id,
       x: spec.x,
       y: spec.y,
@@ -309,7 +310,7 @@ function buildSceneGraph(glyphs: SbgnGlyph[], arcs: SbgnArc[]): SceneGraph {
   }
 
   for (const spec of otherGlyphs) {
-    const node = graph.createNode('PATHWAY_GLYPH', page, {
+    const node = graph.createNode('PATHWAY_GLYPH', pageId, {
       name: spec.label ?? spec.id,
       x: spec.x,
       y: spec.y,
@@ -326,7 +327,7 @@ function buildSceneGraph(glyphs: SbgnGlyph[], arcs: SbgnArc[]): SceneGraph {
     if (!sourceId || !targetId) continue
 
     const arcType = ARC_CLASS_MAP[spec.class] ?? 'modulation'
-    const node = graph.createNode('PATHWAY_ARC', page, {
+    const node = graph.createNode('PATHWAY_ARC', pageId, {
       name: `${spec.source} → ${spec.target}`,
     })
     const data: Record<string, unknown> = { arcType, sourceId, targetId }

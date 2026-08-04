@@ -3,13 +3,13 @@ import { computed } from 'vue'
 
 import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
-import { useI18n } from '@open-pencil/vue'
+import { useI18n } from '@signal-forge/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import { ARC_TYPE_LABELS } from './labels'
 
-const { node, data } = defineProps<{
+const props = defineProps<{
   node: SceneNode
   data: PathwayNodeData
 }>()
@@ -17,18 +17,18 @@ const { node, data } = defineProps<{
 const store = useEditorStore()
 const { panels } = useI18n()
 
-const arcType = data.arcType ?? 'consumption'
+const arcType = props.data.arcType ?? 'consumption'
 
 const sourceName = computed(() => {
-  if (!data.sourceId) return '—'
-  const sourceNode = store.graph.getNode(data.sourceId)
-  return sourceNode?.name ?? data.sourceId
+  if (!props.data.sourceId) return '—'
+  const sourceNode = store.graph.getNode(props.data.sourceId)
+  return sourceNode?.name ?? props.data.sourceId
 })
 
 const targetName = computed(() => {
-  if (!data.targetId) return '—'
-  const targetNode = store.graph.getNode(data.targetId)
-  return targetNode?.name ?? data.targetId
+  if (!props.data.targetId) return '—'
+  const targetNode = store.graph.getNode(props.data.targetId)
+  return targetNode?.name ?? props.data.targetId
 })
 </script>
 

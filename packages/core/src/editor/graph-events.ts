@@ -100,6 +100,9 @@ export function createGraphEventSubscription(options: GraphEventOptions) {
       reordered: (nodeId, parentId, index) => {
         options.emitEditorEvent('node:reordered', nodeId, parentId, index)
         onNodeStructureChanged(nodeId)
+      },
+      batchCompleted: () => {
+        options.requestRender()
       }
     })
   }

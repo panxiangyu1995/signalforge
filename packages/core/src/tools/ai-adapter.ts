@@ -55,6 +55,12 @@ export interface AIAdapterOptions {
   onFlashNodes?: (nodeIds: string[]) => void
   onToolLog?: (entry: ToolLogEntry) => void
   getStepBudget?: () => StepBudget
+  devLog?: {
+    info: (tag: string, msg: string, data?: unknown) => void
+    warn: (tag: string, msg: string, data?: unknown) => void
+    error: (tag: string, msg: string, data?: unknown) => void
+    perf: (tag: string, msg: string, ms: number, data?: unknown) => void
+  }
 }
 
 const STEP_WARNING_THRESHOLD = 5
@@ -165,9 +171,13 @@ export function toolsToAI(
         const nodeBefore =
           def.mutates && options.onToolLog ? captureNodeSnapshot(figma, args) : undefined
 
+        options.devLog?.info('tool', `▶ ${def.name} START`, { mutates: def.mutates, args: truncateArgs(args) })
         options.onBeforeExecute?.(def)
+        const beforeExecMs = Date.now()
         try {
           let execResult = await def.execute(options.getFigma(), args)
+          const execMs = Date.now() - beforeExecMs
+          options.devLog?.perf('tool', `◀ ${def.name} OK`, execMs, { resultKeys: typeof execResult === 'object' && execResult ? Object.keys(execResult) : null })
           if (def.mutates && options.onFlashNodes) {
             const ids = extractNodeIds(execResult)
             if (ids.length > 0) options.onFlashNodes(ids)
@@ -179,10 +189,17 @@ export function toolsToAI(
           return execResult
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : String(err)
+          const execMs = Date.now() - beforeExecMs
+          options.devLog?.error('tool', `◀ ${def.name} ERROR`, { execMs, error: errorMsg })
           emitToolLog(options, def, args, startTime, figma, nodeBefore, null, errorMsg)
+          if (figma.pathwayBatch && def.name !== 'end_pathway') {
+            figma.resetPathwayBatch()
+            options.devLog?.warn('tool', `↻ ${def.name} reset stuck pathwayBatch after error`)
+          }
           return { error: errorMsg }
         } finally {
           await options.onAfterExecute?.(def)
+          options.devLog?.perf('tool', `↻ ${def.name} AFTER_EXECUTE TOTAL`, Date.now() - startTime)
         }
       }
     }
@@ -326,4 +343,16 @@ function paramToValibot(v: typeof valibot, param: ParamDef): unknown {
   }
 
   return schema
+}
+
+function truncateArgs(args: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, val] of Object.entries(args)) {
+    if (typeof val === 'string' && val.length > 500) {
+      out[key] = val.slice(0, 500) + '...[truncated]'
+    } else {
+      out[key] = val
+    }
+  }
+  return out
 }

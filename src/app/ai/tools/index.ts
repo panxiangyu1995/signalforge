@@ -3,6 +3,8 @@ import { tool } from 'ai'
 import * as v from 'valibot'
 
 import { computeAllLayouts } from '@signal-forge/core/layout'
+import { hierarchicalLayout } from '@signal-forge/core/pathway/layout/hierarchical'
+import { computeOrthogonalBendPoints } from '@signal-forge/core/pathway/layout/orthogonal'
 import { BIOPATH_CORE_TOOLS, toolsToAI } from '@signal-forge/core/tools'
 import type { StepBudget, ToolLogEntry } from '@signal-forge/core/tools'
 import type { SceneNode } from '@signal-forge/scene-graph'
@@ -11,8 +13,9 @@ import { makeFigmaFromStore } from '@/app/automation/bridge/figma-factory'
 import { getActiveEditorStore } from '@/app/editor/active-store'
 import type { EditorStore } from '@/app/editor/active-store'
 import { ensureGraphFonts } from '@/app/editor/fonts'
+import { aiLog } from '@/app/ai/dev-log'
 
-export const MAX_AGENT_STEPS = 50
+export const MAX_AGENT_STEPS = 100
 
 export interface StepUsage {
   inputTokens: number
@@ -48,6 +51,7 @@ class RunState {
 }
 
 const runStates = new WeakMap<EditorStore, RunState>()
+const batchResetters = new WeakMap<EditorStore, () => void>()
 
 function getRunState(store?: EditorStore): RunState {
   const target = store ?? getActiveEditorStore()
@@ -74,6 +78,12 @@ export function resetRunSteps(store?: EditorStore): void {
   getRunState(store).resetSteps()
 }
 
+export function resetBatchState(store?: EditorStore): void {
+  const target = store ?? getActiveEditorStore()
+  const resetter = batchResetters.get(target)
+  if (resetter) resetter()
+}
+
 export function didHitStepLimit(store?: EditorStore): boolean {
   return getRunState(store).hitLimit()
 }
@@ -84,34 +94,79 @@ export function clearToolLogEntries(store?: EditorStore): void {
 
 export function createAITools(store: EditorStore) {
   let beforeSnapshot: Map<string, SceneNode> | null = null
+  let batchBeforeSnapshot: Map<string, SceneNode> | null = null
   const runState = getRunState(store)
+  aiLog.info('ai-tools', 'createAITools called — AI tool system initialized')
+
+  const resetBatchState = () => {
+    batchBeforeSnapshot = null
+    beforeSnapshot = null
+    const figma = makeFigmaFromStore(store)
+    if (figma.pathwayBatch) {
+      figma.resetPathwayBatch()
+      aiLog.warn('ai-tools', 'reset stuck pathwayBatch on batch state reset')
+    }
+  }
+
+  batchResetters.set(store, resetBatchState)
 
   return toolsToAI(
     BIOPATH_CORE_TOOLS,
     {
       getFigma: () => makeFigmaFromStore(store),
       onBeforeExecute: (def) => {
+        if (def.name === 'begin_pathway') {
+          if (batchBeforeSnapshot) {
+            aiLog.warn('ai-tools', 'begin_pathway called while batch already active — resetting')
+          }
+          batchBeforeSnapshot = store.snapshotPage()
+          return
+        }
+        const figma = makeFigmaFromStore(store)
+        if (figma.pathwayBatch) return
         if (def.mutates) {
           beforeSnapshot = store.snapshotPage()
         }
       },
       onAfterExecute: async (def) => {
+        const figma = makeFigmaFromStore(store)
+        if (figma.pathwayBatch && def.name !== 'end_pathway') return
         if (def.mutates) {
+          const t0 = Date.now()
           const pageId = store.state.currentPageId
           const pageNode = store.graph.getNode(pageId)
+
+          if (def.name === 'end_pathway') {
+            hierarchicalLayout(store.graph, pageId, { direction: 'top-bottom', spacing: 60 })
+            computeOrthogonalBendPoints(store.graph, pageId, 'top-bottom')
+            aiLog.perf('afterExec', `${def.name} pathwayLayout`, Date.now() - t0)
+          }
+
           if (pageNode) await ensureGraphFonts(store.graph, pageNode.childIds)
+          aiLog.perf('afterExec', `${def.name} ensureGraphFonts`, Date.now() - t0)
           computeAllLayouts(store.graph, pageId)
+          aiLog.perf('afterExec', `${def.name} computeAllLayouts`, Date.now() - t0)
           store.requestRender()
-          if (beforeSnapshot) {
-            const before = beforeSnapshot
+          aiLog.perf('afterExec', `${def.name} requestRender`, Date.now() - t0)
+
+          let undoBefore = beforeSnapshot
+          if (def.name === 'end_pathway' && batchBeforeSnapshot) {
+            undoBefore = batchBeforeSnapshot
+            batchBeforeSnapshot = null
+          }
+
+          if (undoBefore) {
+            const before = undoBefore
             const after = store.snapshotPage()
+            aiLog.perf('afterExec', `${def.name} snapshotPage`, Date.now() - t0)
             store.pushUndoEntry({
-              label: `AI: ${def.name}`,
+              label: def.name === 'end_pathway' ? 'AI: pathway batch' : `AI: ${def.name}`,
               forward: () => store.restorePageFromSnapshot(after),
               inverse: () => store.restorePageFromSnapshot(before)
             })
             beforeSnapshot = null
           }
+          aiLog.perf('afterExec', `${def.name} TOTAL`, Date.now() - t0)
         }
       },
       onFlashNodes: (nodeIds) => {
@@ -126,7 +181,8 @@ export function createAITools(store: EditorStore) {
       getStepBudget: (): StepBudget => ({
         current: runState.currentSteps,
         max: MAX_AGENT_STEPS
-      })
+      }),
+      devLog: aiLog,
     },
     { v, valibotSchema, tool }
   )
