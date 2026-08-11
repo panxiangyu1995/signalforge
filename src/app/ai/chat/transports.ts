@@ -10,6 +10,7 @@ import { createLanguageModel, resolveLanguageModelID } from '@/app/ai/chat/model
 import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
 import { MAX_AGENT_STEPS, createAITools, recordStepUsage, resetBatchState, resetRunSteps } from '@/app/ai/tools'
 import { aiLog } from '@/app/ai/dev-log'
+import { chatPersistenceManager } from '@/app/ai/chat/persistence'
 import type { getActiveEditorStore } from '@/app/editor/active-store'
 
 type EditorStore = ReturnType<typeof getActiveEditorStore>
@@ -139,6 +140,8 @@ export function createChatSessionManager({
   let chat: Chat<UIMessage> | null = null
   let acpTransportInstance: { destroy(): Promise<void> } | null = null
   let overrideTransport: (() => ChatTransport<UIMessage>) | null = null
+  let lastSavedLength = 0
+  let unwatchChat: (() => void) | null = null
 
   function markTransportDirty() {
     transportDirty = true
@@ -171,6 +174,26 @@ export function createChatSessionManager({
     })
   }
 
+  async function setupPersistenceWatch() {
+    if (!chat || typeof window === 'undefined') return
+    unwatchChat?.()
+    lastSavedLength = chat.messages.length
+
+    const { watch } = await import('vue')
+    const stopWatch = watch(
+      [() => chat?.status, () => chat?.messages.length],
+      ([status, msgLen]) => {
+        if (status === 'ready' && msgLen !== undefined && msgLen > lastSavedLength) {
+          const currentMessages = chat?.messages ?? []
+          chatPersistenceManager.save('chat-session', currentMessages, providerID.value)
+          lastSavedLength = currentMessages.length
+        }
+      },
+      { deep: false }
+    )
+    unwatchChat = stopWatch
+  }
+
   async function ensureChat(): Promise<Chat<UIMessage> | null> {
     if (!isConfigured.value) return null
 
@@ -187,6 +210,7 @@ export function createChatSessionManager({
       chat = new Chat<UIMessage>({ transport, messages })
       currentChatStore = store
       transportDirty = false
+      await setupPersistenceWatch()
     }
     return chat
   }
@@ -196,6 +220,9 @@ export function createChatSessionManager({
     chat = null
     currentChatStore = null
     transportDirty = false
+    lastSavedLength = 0
+    unwatchChat?.()
+    unwatchChat = null
   }
 
   function setOverrideTransport(factory: (() => ChatTransport<UIMessage>) | null) {

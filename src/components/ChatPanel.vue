@@ -12,6 +12,7 @@ import ChatInput from '@/components/chat/ChatInput.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import AppTextButton from '@/components/ui/AppTextButton.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
+import ChatHistoryDialog from '@/components/chat/ChatHistoryDialog.vue'
 import { useAIChat } from '@/app/ai/chat/use'
 import { toast } from '@/app/shell/ui'
 import { useI18n } from '@signal-forge/vue'
@@ -38,6 +39,7 @@ void ensureChat()
 const messagesEnd = ref<HTMLDivElement>()
 const debugCopied = refAutoReset(false, 1500)
 const acpLogCopied = refAutoReset(false, 1500)
+const showHistory = ref(false)
 
 const messages = computed(() => chat.value?.messages ?? [])
 const status = computed(() => chat.value?.status ?? 'ready')
@@ -122,6 +124,10 @@ function handleClearChat() {
   clearToolLogEntries()
   clearAcpDebugLog()
 }
+
+function handleOpenHistory() {
+  showHistory.value = true
+}
 </script>
 
 <template>
@@ -193,6 +199,14 @@ function handleClearChat() {
         class="flex shrink-0 items-center gap-1 border-t border-border px-3 py-1"
       >
         <AppTextButton
+          v-if="!IS_DEV"
+          :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover' }"
+          @click="handleOpenHistory"
+        >
+          <icon-lucide-history class="size-3" />
+          History
+        </AppTextButton>
+        <AppTextButton
           v-if="IS_DEV"
           :ui="{ base: 'flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-hover' }"
           @click="handleCopyDebug"
@@ -222,6 +236,8 @@ function handleClearChat() {
       <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
 
       <AcpPermissionDialog />
+
+      <ChatHistoryDialog v-model:open="showHistory" />
     </template>
   </div>
 </template>
