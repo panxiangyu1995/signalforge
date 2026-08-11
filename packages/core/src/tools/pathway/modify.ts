@@ -78,13 +78,15 @@ export const addEntity = defineTool({
       required: true,
       enum: GLYPH_TYPES
     },
+    x: { type: 'number', description: 'X position (omit for auto-layout)' },
+    y: { type: 'number', description: 'Y position (omit for auto-layout)' },
     compartment: { type: 'string', description: 'Parent compartment name (e.g. "Cytoplasm"). The compartment must already exist.' },
     state_variables: { type: 'string', description: 'Comma-separated state variables (e.g. "P@Y705,Ub")' },
     clone_marker: { type: 'boolean', description: 'Mark entity as a clone (gray band at bottom)' }
   },
   execute: (figma, args) => {
     const size = GLYPH_DEFAULT_SIZES[args.glyph_type] ?? { w: 96, h: 48 }
-    const overrides: Partial<SceneNode> = { name: args.name, width: size.w, height: size.h }
+    const overrides: Partial<SceneNode> = { name: args.name, width: size.w, height: size.h, x: args.x ?? 0, y: args.y ?? 0 }
     const node = figma.createPathwayGlyph(args.glyph_type as PathwayGlyphType, overrides)
 
     const warnings: string[] = []
@@ -140,11 +142,13 @@ export const addProcess = defineTool({
       required: true,
       enum: PROCESS_TYPES
     },
+    x: { type: 'number', description: 'X position (omit for auto-layout)' },
+    y: { type: 'number', description: 'Y position (omit for auto-layout)' },
     compartment: { type: 'string', description: 'Parent compartment name' }
   },
   execute: (figma, args) => {
     const size = PROCESS_DEFAULT_SIZES[args.process_type] ?? { w: 24, h: 24 }
-    const overrides: Partial<SceneNode> = { name: args.name, width: size.w, height: size.h }
+    const overrides: Partial<SceneNode> = { name: args.name, width: size.w, height: size.h, x: args.x ?? 0, y: args.y ?? 0 }
     const node = figma.createPathwayProcess(args.process_type as PathwayProcessType, overrides)
 
     const warnings: string[] = []
@@ -246,10 +250,17 @@ export const addCompartment = defineTool({
   mutates: true,
   description: 'Add a compartment (cell region) to the pathway diagram. Layout is computed automatically by auto_layout_pathway or end_pathway.',
   params: {
-    name: { type: 'string', description: 'Compartment name (e.g. "Cytoplasm", "Nucleus")', required: true }
+    name: { type: 'string', description: 'Compartment name (e.g. "Cytoplasm", "Nucleus")', required: true },
+    x: { type: 'number', description: 'X position (omit for auto-layout)' },
+    y: { type: 'number', description: 'Y position (omit for auto-layout)' },
+    width: { type: 'number', description: 'Width (omit for default 800)' },
+    height: { type: 'number', description: 'Height (omit for default 600)' }
   },
   execute: (figma, args) => {
-    const node = figma.createCompartment(args.name, {})
+    const node = figma.createCompartment(args.name, {
+      x: args.x ?? 0, y: args.y ?? 0,
+      width: args.width ?? 800, height: args.height ?? 600
+    })
     return nodeSummary(node)
   }
 })
@@ -301,12 +312,12 @@ export const setUnitOfInformation = defineTool({
 export const setPathwayStyle = defineTool({
   name: 'set_pathway_style',
   mutates: true,
-  description: 'Set the pathway rendering style. "sbgn" uses strict gray SBGN styling; "publication" uses semantic color coding with tinted fills and borders.',
+  description: 'Set the pathway rendering style. "sbgn" uses strict gray SBGN styling; "publication" uses semantic color coding with tinted fills and borders; "realistic" uses 3D-like rendering with radial gradients, highlights, shadows, and beveled edges for a photorealistic look.',
   params: {
-    style: { type: 'string', description: 'Rendering style', required: true, enum: ['sbgn', 'publication'] }
+    style: { type: 'string', description: 'Rendering style', required: true, enum: ['sbgn', 'publication', 'realistic'] }
   },
   execute: (figma, args) => {
-    figma.setPathwayStyle(args.style as 'sbgn' | 'publication')
+    figma.setPathwayStyle(args.style as 'sbgn' | 'publication' | 'realistic')
     return { style: args.style }
   }
 })

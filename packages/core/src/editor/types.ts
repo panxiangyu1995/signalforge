@@ -89,7 +89,7 @@ export interface EditorState {
   nodeEditState?: RenderOverlays['nodeEditState'] | null
   cursorCanvasX?: number | null
   cursorCanvasY?: number | null
-  pathwayStyle: 'sbgn' | 'publication'
+  pathwayStyle: 'sbgn' | 'publication' | 'realistic'
 }
 
 export interface EditorEvents extends SceneGraphEvents {
@@ -133,7 +133,7 @@ export interface EditorContext {
   ) => void
   setSelectedIds: (ids: Set<string>) => void
   setActiveTool: (tool: Tool) => void
-  setPathwayStyle: (style: 'sbgn' | 'publication') => void
+  setPathwayStyle: (style: 'sbgn' | 'publication' | 'realistic') => void
   runLayoutForNode: (id: string) => void
   subscribeToGraph: () => void
 }

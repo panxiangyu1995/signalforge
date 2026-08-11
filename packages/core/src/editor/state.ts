@@ -27,6 +27,6 @@ export function createDefaultEditorState(pageId: string): EditorState {
     sceneVersion: 0,
     loading: false,
     enteredContainerId: null,
-    pathwayStyle: 'publication'
+    pathwayStyle: 'realistic'
   }
 }

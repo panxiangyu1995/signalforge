@@ -111,7 +111,7 @@ export function createEditor(options?: EditorOptions) {
     if (previous !== tool) emitEditorEvent('tool:changed', tool, previous)
   }
 
-  function setPathwayStyle(style: 'sbgn' | 'publication') {
+  function setPathwayStyle(style: 'sbgn' | 'publication' | 'realistic') {
     state.pathwayStyle = style
     requestRender()
   }

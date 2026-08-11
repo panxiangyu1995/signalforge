@@ -49,7 +49,7 @@ After completing a pathway, give a **2-3 line** summary: number of compartments,
 1. **Arcs connect entity ↔ process, NOT entity ↔ entity.** A production arc goes FROM a process TO an entity. A consumption arc goes FROM an entity TO a process. Inhibition/catalysis/stimulation arcs go FROM an entity TO a process.
 2. **Create compartments first**, then entities inside them, then processes, then arcs.
 3. **Use `begin_pathway` → `add_compartment`/`add_entity`/`add_process`/`add_arc` × N → `end_pathway`** for complete diagrams. Use `create_pathway` only for simple diagrams (≤5 nodes). Use individual `add_*` tools for incremental additions to existing diagrams.
-4. **Do NOT specify x/y coordinates** — layout is computed automatically by `end_pathway` or `auto_layout_pathway`. Omit `x`, `y`, `width`, `height` from all specs.
+4. **You MAY specify x/y coordinates** to control spatial layout. Coordinates use a top-left origin; typical pathway spans (0,0) to (1200,800). Position ligands at top (y≈50), membrane receptors at (y≈200), cytoplasmic proteins at (y≈400), nuclear proteins at (y≈600). Leave at least 120px horizontal gap between entities. If you omit x/y, layout is computed automatically by `end_pathway` or `auto_layout_pathway`.
 5. **Entity sizes:** macromolecule ~96×48, simple_chemical ~48×48, process ~24×24, compartment ~800×600.
 6. **Use `source`/`target` names** (not IDs) in `add_arc` — e.g. `source: "JAK2", target: "STAT3 phosphorylation"`.
 
@@ -62,7 +62,10 @@ After completing a pathway, give a **2-3 line** summary: number of compartments,
 5. **Arc routing:** Default signal flow is top-to-bottom. Consumption arcs go downward (entity → process). Production arcs go downward (process → entity). Modulation/catalysis/inhibition arcs come from the side. Use `auto_layout_pathway(direction="left-right")` for horizontal flow.
 6. **State variable formatting:** Use "VALUE@VARIABLE" convention, e.g., "P@Y705" for phosphorylation at tyrosine 705, "Ub" for ubiquitination. Set with `set_state_variable(node_id, variable="P@Y705")`.
 7. **Unit of information:** Add biochemical annotations with `set_unit_of_information(node_id, text="MT:mtDNA")` or `set_unit_of_information(node_id, text="charge:2+")`.
-8. **Publication style:** The default rendering style is "publication" with semantic color coding — entities colored by type (blue=macromolecule, pink=simple_chemical, green=nucleic_acid_feature, purple=complex, teal=perturbation, amber=phenotype), gradient fills for 3D depth, and tinted borders. Arcs are colored by function (blue=activation/stimulation, red=inhibition, green=catalysis). Compartments have type-inferred gradient backgrounds and membrane lines. Use `set_pathway_style(style="sbgn")` only if strict gray SBGN styling is needed.
+8. **Rendering styles:** Three styles are available:
+   - **"realistic"** (default): 3D-like photorealistic rendering with radial gradients, specular highlights, inner/outer shadows, beveled edges, and enhanced decorations. Produces striking, publication-quality visuals.
+   - **"publication"**: Semantic color coding — entities colored by type, gradient fills for depth, tinted borders, colored arcs.
+   - **"sbgn"**: Strict gray SBGN styling. Use only if strict compliance is required.
 
 ## Workflow
 
@@ -77,7 +80,7 @@ After completing a pathway, give a **2-3 line** summary: number of compartments,
 
 - `import_sbgn_ml` — import from SBGN-ML files (exchange format with Newt, CellDesigner, PathVisio)
 - `export_sbgn_ml` — export to SBGN-ML for downstream analysis
-- `set_pathway_style(style="sbgn")` — switch to strict gray SBGN styling (publication style is default)
+- `set_pathway_style(style="sbgn")` — switch to strict gray SBGN styling (realistic style is default)
 
 ## Sketch-to-Pathway
 

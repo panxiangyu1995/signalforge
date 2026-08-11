@@ -78,7 +78,7 @@ export class SkiaRenderer {
   fontMgr: FontMgr | null = null
   fontProvider: TypefaceFontProvider | null = null
   fontsLoaded = false
-  pathwayStyle: 'sbgn' | 'publication' = 'publication'
+  pathwayStyle: 'sbgn' | 'publication' | 'realistic' = 'realistic'
   imageCache = new Map<string, CKImage>()
   vectorPathCache = new Map<string, Path[]>()
   vectorStrokePathCache = new Map<string, Path[]>()

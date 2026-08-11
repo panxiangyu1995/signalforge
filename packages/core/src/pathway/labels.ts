@@ -1,31 +1,14 @@
 import type { Canvas, CanvasKit, Font, Path } from 'canvaskit-wasm'
 
-import type { SceneNode } from '@signal-forge/scene-graph'
-import type { PathwayNodeData, PathwayGlyphType } from '@signal-forge/scene-graph'
+import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
-import { SBGN_STYLE } from './constants'
-import { hexToCKColor } from './utils'
+import { SBGN_STYLE, REALISTIC_STYLE } from './constants'
+import { buildRoundedRectPath } from './utils'
 
 const GLYPH_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize
 const COMPARTMENT_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize + 2
-const PROCESS_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize - 2
-
-function buildRoundedRectPath(ck: CanvasKit, w: number, h: number, cr: number): Path {
-  const path = new ck.Path()
-  path.moveTo(cr, 0)
-  path.lineTo(w - cr, 0)
-  path.quadTo(w, 0, w, cr)
-  path.lineTo(w, h - cr)
-  path.quadTo(w, h, w - cr, h)
-  path.lineTo(cr, h)
-  path.quadTo(0, h, 0, h - cr)
-  path.lineTo(0, cr)
-  path.quadTo(0, 0, cr, 0)
-  path.close()
-  return path
-}
 
 export function paintPathwayLabel(
   ck: CanvasKit,
@@ -39,7 +22,6 @@ export function paintPathwayLabel(
   if (!font) return
 
   const paddingX = 8
-  const paddingY = 4
   const maxW = node.width - paddingX * 2
   if (maxW < 10) return
 
@@ -50,6 +32,15 @@ export function paintPathwayLabel(
 
   const textX = (node.width - textW) / 2
   const textY = node.height / 2 + GLYPH_LABEL_FONT_SIZE * 0.35
+
+  if (r.pathwayStyle === 'realistic') {
+    const outlineW = REALISTIC_STYLE.textOutline.width
+    r.auxStroke.setStyle(ck.PaintStyle.Stroke)
+    r.auxStroke.setColor(ck.Color4f(1, 1, 1, 0.85))
+    r.auxStroke.setStrokeWidth(outlineW * 2)
+    canvas.drawText(displayText, textX, textY, r.auxStroke, font)
+    r.auxStroke.setStrokeWidth(1)
+  }
 
   r.auxFill.setColor(ck.Color4f(0, 0, 0, 1))
   canvas.drawText(displayText, textX, textY, r.auxFill, font)
@@ -76,32 +67,6 @@ export function paintCompartmentLabel(
   const textY = padding * 0.5 + COMPARTMENT_LABEL_FONT_SIZE * 0.85
 
   r.auxFill.setColor(ck.Color4f(0.2, 0.2, 0.2, 1))
-  canvas.drawText(displayText, textX, textY, r.auxFill, font)
-}
-
-function paintProcessLabel(
-  ck: CanvasKit,
-  canvas: Canvas,
-  node: SceneNode,
-  text: string,
-  r: SkiaRenderer
-): void {
-  if (!text) return
-  const font = r.sectionTitleFont
-  if (!font) return
-
-  const maxW = node.width - 4
-  if (maxW < 6) return
-
-  const displayText = ellipsizeText(font, text, maxW)
-  if (!displayText) return
-
-  const textW = measureTextWidth(font, displayText)
-
-  const textX = (node.width - textW) / 2
-  const textY = node.height / 2 + PROCESS_LABEL_FONT_SIZE * 0.35
-
-  r.auxFill.setColor(ck.Color4f(0x55 / 255, 0x55 / 255, 0x55 / 255, 1))
   canvas.drawText(displayText, textX, textY, r.auxFill, font)
 }
 
@@ -215,7 +180,7 @@ function buildGlyphClipPath(
   if (glyphType === 'macromolecule' || glyphType === 'simple_chemical') {
     const cr = glyphType === 'simple_chemical'
       ? Math.min(w / 2, h / 2)
-      : Math.min(w, h) * 0.12
+      : w * SBGN_STYLE.macromoleculeCornerRadius
     return buildRoundedRectPath(ck, w, h, cr)
   }
 
@@ -353,6 +318,6 @@ function measureTextWidth(font: Font, text: string): number {
   const glyphs = font.getGlyphIDs(text)
   const widths = font.getGlyphWidths(glyphs)
   let total = 0
-  for (let i = 0; i < widths.length; i++) total += widths[i]
+  for (const w of widths) total += w
   return total
 }

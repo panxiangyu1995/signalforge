@@ -169,6 +169,11 @@
       "types": "./dist/pathway/layout/orthogonal.d.ts",
       "import": "./dist/pathway/layout/orthogonal.js",
       "default": "./dist/pathway/layout/orthogonal.js"
+    },
+    "./pathway/layout/collision": {
+      "types": "./dist/pathway/layout/collision.d.ts",
+      "import": "./dist/pathway/layout/collision.js",
+      "default": "./dist/pathway/layout/collision.js"
     }
   },
   "publishConfig": {

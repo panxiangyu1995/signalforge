@@ -5,6 +5,7 @@ import * as v from 'valibot'
 import { computeAllLayouts } from '@signal-forge/core/layout'
 import { hierarchicalLayout } from '@signal-forge/core/pathway/layout/hierarchical'
 import { computeOrthogonalBendPoints } from '@signal-forge/core/pathway/layout/orthogonal'
+import { resolveCollisions } from '@signal-forge/core/pathway/layout/collision'
 import { BIOPATH_CORE_TOOLS, toolsToAI } from '@signal-forge/core/tools'
 import type { StepBudget, ToolLogEntry } from '@signal-forge/core/tools'
 import type { SceneNode } from '@signal-forge/scene-graph'
@@ -139,7 +140,8 @@ export function createAITools(store: EditorStore) {
           if (def.name === 'end_pathway') {
             hierarchicalLayout(store.graph, pageId, { direction: 'top-bottom', spacing: 60 })
             computeOrthogonalBendPoints(store.graph, pageId, 'top-bottom')
-            aiLog.perf('afterExec', `${def.name} pathwayLayout`, Date.now() - t0)
+            resolveCollisions(store.graph, pageId, 20)
+            aiLog.perf('afterExec', `${def.name} pathwayLayout+collision`, Date.now() - t0)
           }
 
           if (pageNode) await ensureGraphFonts(store.graph, pageNode.childIds)

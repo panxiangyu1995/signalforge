@@ -88,7 +88,7 @@ export class FigmaAPI implements NodeProxyHost {
     this._currentPageId = pages[0]?.id ?? graph.rootId
   }
 
-  private _pathwayStyle: 'sbgn' | 'publication' = 'publication'
+  private _pathwayStyle: 'sbgn' | 'publication' | 'realistic' = 'realistic'
   private _batchDepth = 0
   private _pathwayBatch = false
 
@@ -132,14 +132,14 @@ export class FigmaAPI implements NodeProxyHost {
     return this._pathwayBatch
   }
 
-  setPathwayStyle(style: 'sbgn' | 'publication'): void {
+  setPathwayStyle(style: 'sbgn' | 'publication' | 'realistic'): void {
     this._pathwayStyle = style
     if (this._renderer) {
       this._renderer.pathwayStyle = style
     }
   }
 
-  get pathwayStyle(): 'sbgn' | 'publication' {
+  get pathwayStyle(): 'sbgn' | 'publication' | 'realistic' {
     return this._pathwayStyle
   }
 

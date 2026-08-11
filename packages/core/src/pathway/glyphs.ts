@@ -1,11 +1,11 @@
 import type { Canvas, CanvasKit, Shader } from 'canvaskit-wasm'
 
-import type { SceneNode } from '@signal-forge/scene-graph'
-import type { PathwayNodeData, PathwayGlyphType } from '@signal-forge/scene-graph'
+import type { SceneNode, PathwayNodeData, PathwayGlyphType } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
 import { SBGN_STYLE, PUBLICATION_STYLE, type PathwayStyle } from './constants'
+import { paintRealisticGlyph } from './glyphs-realistic'
 import { hexToCKColor } from './utils'
 
 function glyphFillColor(
@@ -99,7 +99,7 @@ export function paintMacromolecule(
   const w = node.width
   const h = node.height
   if (w <= 0 || h <= 0) return
-  const cr = Math.min(w, h) * 0.12
+  const cr = w * SBGN_STYLE.macromoleculeCornerRadius
 
   const path = new ck.Path()
   try {
@@ -258,11 +258,11 @@ export function paintPerturbation(
   const path = new ck.Path()
   try {
     path.moveTo(0, 0)
-    path.lineTo(w * 0.25, h * 0.5)
-    path.lineTo(0, h)
-    path.lineTo(w, h)
-    path.lineTo(w * 0.75, h * 0.5)
     path.lineTo(w, 0)
+    path.lineTo(w * 0.85, h * 0.5)
+    path.lineTo(w, h)
+    path.lineTo(0, h)
+    path.lineTo(w * 0.15, h * 0.5)
     path.close()
 
     applyGlyphFill(ck, canvas, path, data.glyphType, style, h, r)
@@ -375,6 +375,10 @@ export function paintPathwayGlyph(
   style: PathwayStyle,
   r: SkiaRenderer
 ): void {
+  if (style === 'realistic') {
+    paintRealisticGlyph(ck, canvas, node, data, r)
+    return
+  }
   const glyphType = data.glyphType
   if (!glyphType) {
     paintUnspecifiedEntity(ck, canvas, node, data, style, r)

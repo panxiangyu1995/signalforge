@@ -144,4 +144,91 @@ export const PUBLICATION_STYLE = {
   },
 } as const
 
-export type PathwayStyle = 'sbgn' | 'publication'
+export const REALISTIC_STYLE = {
+  entityFills: {
+    macromolecule: '#A8D8F0',
+    simple_chemical: '#F5B7B1',
+    nucleic_acid_feature: '#A9DFBF',
+    complex: '#D2B4DE',
+    perturbation: '#A3E4D7',
+    phenotype: '#F9E79F',
+    source_sink: '#D5D8DC',
+    unspecified_entity: '#D5D8DC',
+  },
+
+  entityRadialGradients: {
+    macromolecule: { cx: 0.35, cy: 0.3, stops: ['#C5E8F7', '#85C1E9', '#5DADE2', '#2E86C1'] },
+    simple_chemical: { cx: 0.35, cy: 0.3, stops: ['#FADBD8', '#F1948A', '#E74C3C', '#C0392B'] },
+    nucleic_acid_feature: { cx: 0.35, cy: 0.3, stops: ['#D5F5E3', '#82E0AA', '#27AE60', '#1E8449'] },
+    complex: { cx: 0.35, cy: 0.3, stops: ['#E8DAEF', '#C39BD3', '#8E44AD', '#6C3483'] },
+    perturbation: { cx: 0.35, cy: 0.3, stops: ['#D1F2EB', '#76D7C4', '#16A085', '#0E6655'] },
+    phenotype: { cx: 0.35, cy: 0.3, stops: ['#FEF9E7', '#F9E79F', '#F39C12', '#D68910'] },
+    source_sink: { cx: 0.35, cy: 0.3, stops: ['#F2F3F4', '#D5D8DC', '#6A6A6A', '#4A4A4A'] },
+    unspecified_entity: { cx: 0.35, cy: 0.3, stops: ['#F2F3F4', '#D5D8DC', '#6A6A6A', '#4A4A4A'] },
+  },
+
+  entityBorders: {
+    macromolecule: '#2E86C1',
+    simple_chemical: '#C0392B',
+    nucleic_acid_feature: '#1E8449',
+    complex: '#6C3483',
+    perturbation: '#0E6655',
+    phenotype: '#D68910',
+    source_sink: '#4A4A4A',
+    unspecified_entity: '#4A4A4A',
+    default: '#4A4A4A',
+  },
+
+  highlightColor: 'rgba(255, 255, 255, 0.4)',
+  innerShadow: {
+    offsetX: 1,
+    offsetY: 2,
+    blur: 4,
+    color: 'rgba(0, 0, 0, 0.15)',
+  },
+  bevelTopColor: 'rgba(255, 255, 255, 0.3)',
+  bevelBottomColor: 'rgba(0, 0, 0, 0.2)',
+
+  dropShadow: {
+    offsetX: 3,
+    offsetY: 6,
+    blur: 12,
+    color: 'rgba(0, 0, 0, 0.25)',
+  },
+
+  compartmentShadow: {
+    offsetX: 3,
+    offsetY: 6,
+    blur: 12,
+    color: 'rgba(0, 0, 0, 0.12)',
+  },
+
+  compartmentGradients: {
+    extracellular: { top: 'rgba(173, 216, 230, 0.22)', bottom: 'rgba(173, 216, 230, 0.12)' },
+    membrane: { top: 'rgba(255, 193, 7, 0.25)', bottom: 'rgba(255, 193, 7, 0.15)' },
+    cytoplasm: { top: 'rgba(200, 230, 201, 0.20)', bottom: 'rgba(200, 230, 201, 0.10)' },
+    nucleus: { top: 'rgba(206, 147, 216, 0.20)', bottom: 'rgba(206, 147, 216, 0.10)' },
+    mitochondria: { top: 'rgba(255, 183, 77, 0.20)', bottom: 'rgba(255, 183, 77, 0.10)' },
+    endoplasmic_reticulum: { top: 'rgba(129, 199, 132, 0.20)', bottom: 'rgba(129, 199, 132, 0.10)' },
+    golgi: { top: 'rgba(255, 138, 101, 0.20)', bottom: 'rgba(255, 138, 101, 0.10)' },
+    default: { top: 'rgba(0, 0, 0, 0.06)', bottom: 'rgba(0, 0, 0, 0.03)' },
+  },
+
+  edgeColors: {
+    activation: '#2E86C1',
+    inhibition: '#C0392B',
+    catalysis: '#1E8449',
+    default: '#4A4A4A',
+  },
+
+  arcWidth: 2.5,
+  decorationScale: 2.0,
+  borderWidth: 2,
+
+  textOutline: {
+    color: 'white',
+    width: 2,
+  },
+} as const
+
+export type PathwayStyle = 'sbgn' | 'publication' | 'realistic'

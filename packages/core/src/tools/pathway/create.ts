@@ -229,8 +229,8 @@ export const createPathway = defineTool({
       hierarchicalLayout(figma.graph, pageId, { direction: 'top-bottom', spacing: 60 })
       computeOrthogonalBendPoints(figma.graph, pageId, 'top-bottom')
 
-      if (figma.pathwayStyle !== 'publication') {
-        figma.setPathwayStyle('publication')
+      if (figma.pathwayStyle !== 'realistic' && figma.pathwayStyle !== 'publication') {
+        figma.setPathwayStyle('realistic')
       }
 
       const result: Record<string, unknown> = {

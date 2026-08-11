@@ -8,7 +8,7 @@ import { paintPathwayGlyph } from './glyphs'
 import { paintPathwayProcess } from './processes'
 import { paintPathwayArc } from './arcs'
 import { paintPathwayLabel, paintCompartmentLabel, paintStateVariables, paintCloneMarker, paintUnitOfInformation } from './labels'
-import { SBGN_STYLE, PUBLICATION_STYLE, type PathwayStyle } from './constants'
+import { SBGN_STYLE, PUBLICATION_STYLE, REALISTIC_STYLE, type PathwayStyle } from './constants'
 import { hexToCKColor } from './utils'
 import { inferMembraneType, paintMembraneLine } from './membrane'
 
@@ -89,17 +89,7 @@ export function renderPathwayGlyph(
     canvas.restore()
   }
 
-  let mainFilter: ImageFilter | null = null
-  if (style === 'publication') {
-    mainFilter = applyDropShadow(ck, r, PUBLICATION_STYLE.dropShadow)
-  }
-
   paintPathwayGlyph(ck, canvas, node, data, style, r)
-
-  if (mainFilter) {
-    clearDropShadow(r)
-    mainFilter.delete()
-  }
 
   if (data.activeState) {
     paintActiveStateBorder(ck, canvas, node, data, r)
@@ -200,27 +190,58 @@ export function renderCompartment(
 
   const path = new ck.Path()
   try {
-    const x0 = w * 0.03
-    const x1 = w * 0.97
-    const y0 = h * 0.03
-    const _y1 = h * 0.97
-
-    path.moveTo(w * 0.05, y0)
+    path.moveTo(0, h * 0.03)
+    path.lineTo(0, h * 0.97)
+    path.quadTo(w * 0.06, h, w * 0.25, h)
+    path.lineTo(w * 0.75, h)
+    path.quadTo(w * 0.95, h, w, h * 0.95)
+    path.lineTo(w, h * 0.05)
+    path.quadTo(w, 0, w * 0.75, 0)
     path.lineTo(w * 0.25, 0)
-    path.lineTo(w * 0.75, 0)
-    path.lineTo(w * 0.95, y0)
-
-    path.quadTo(w, h * 0.25, x1, h * 0.25)
-    path.quadTo(x1, h * 0.5, x1, h * 0.75)
-    path.quadTo(w * 0.95, h, w * 0.75, h)
-    path.lineTo(w * 0.25, h)
-    path.quadTo(w * 0.05, h, x0, h * 0.75)
-    path.quadTo(x0, h * 0.5, x0, h * 0.25)
+    path.quadTo(w * 0.06, 0, 0, h * 0.03)
     path.close()
 
     r.fillPaint.setStyle(ck.PaintStyle.Fill)
 
-    if (style === 'publication') {
+    if (style === 'realistic') {
+      const compType = inferCompartmentType(node.name)
+      const grad = REALISTIC_STYLE.compartmentGradients[compType]
+      let filled = false
+      if (grad) {
+        const shader = ck.Shader.MakeLinearGradient(
+          [0, 0], [0, h],
+          [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
+          [0, 1],
+          ck.TileMode.Clamp
+        )
+        if (shader) {
+          r.fillPaint.setShader(shader)
+          canvas.drawPath(path, r.fillPaint)
+          r.fillPaint.setShader(null)
+          shader.delete()
+          filled = true
+        }
+      }
+      if (!filled) {
+        r.fillPaint.setColor(hexToCKColor(ck, 'rgba(0, 0, 0, 0.05)'))
+        canvas.drawPath(path, r.fillPaint)
+      }
+
+      const cs = REALISTIC_STYLE.compartmentShadow
+      const compShadow = ck.ImageFilter.MakeDropShadow(
+        cs.offsetX, cs.offsetY,
+        cs.blur, cs.blur,
+        hexToCKColor(ck, cs.color),
+        null
+      )
+      r.strokePaint.setStyle(ck.PaintStyle.Stroke)
+      r.strokePaint.setColor(hexToCKColor(ck, '#777'))
+      r.strokePaint.setStrokeWidth(2)
+      r.strokePaint.setImageFilter(compShadow)
+      canvas.drawPath(path, r.strokePaint)
+      r.strokePaint.setImageFilter(null)
+      if (compShadow) compShadow.delete()
+    } else if (style === 'publication') {
       const compType = inferCompartmentType(node.name)
       const grad = PUBLICATION_STYLE.compartmentGradients[compType]
       if (grad) {

@@ -98,7 +98,7 @@ function buildAdjacency(
 export function hierarchicalLayout(
   graph: SceneGraph,
   pageId: string,
-  options?: { direction?: 'top-bottom' | 'left-right'; spacing?: number }
+  options?: { direction?: 'top-bottom' | 'left-right'; spacing?: number; respectPositions?: boolean }
 ): { positioned: number; layers: number } {
   const collected = collectPathwayGraph(graph, pageId)
   if (!collected) return { positioned: 0, layers: 0 }
@@ -120,12 +120,36 @@ export function hierarchicalLayout(
 
   const direction = options?.direction ?? 'top-bottom'
   const spacing = options?.spacing ?? 60
-  const absPositions = computePositions(layers, nodes, direction, spacing)
+  const respectPositions = options?.respectPositions ?? false
+
+  let absPositions: Map<string, Vector>
+  if (respectPositions) {
+    absPositions = collectExistingPositions(graph, pageId, nonCompartmentIds)
+  } else {
+    absPositions = computePositions(layers, nodes, direction, spacing)
+  }
   removeOverlaps(absPositions, layers, nodes, direction, spacing)
   const compBounds = expandCompartments(absPositions, graph, pageId, nodes)
   commitPositions(absPositions, compBounds, graph, pageId, nodes)
 
   return { positioned: nonCompartmentIds.length, layers: maxLayer + 1 }
+}
+
+function collectExistingPositions(
+  graph: SceneGraph,
+  pageId: string,
+  nodeIds: string[]
+): Map<string, Vector> {
+  const positions = new Map<string, Vector>()
+  const page = graph.getNode(pageId)
+  if (!page) return positions
+
+  for (const id of nodeIds) {
+    const abs = graph.getAbsolutePosition(id)
+    if (abs) positions.set(id, { x: abs.x, y: abs.y })
+  }
+
+  return positions
 }
 
 function breakCycles(
@@ -304,7 +328,7 @@ function barycenterOrder(
   adjacencyUp: Map<string, string[]>,
   maxLayer: number
 ): void {
-  for (let round = 0; round < 3; round++) {
+  for (let round = 0; round < 10; round++) {
     for (let l = 1; l <= maxLayer; l++) {
       const ids = layers[l]
       if (!ids || ids.length <= 1) continue

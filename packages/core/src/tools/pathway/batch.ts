@@ -21,8 +21,8 @@ export const endPathway = defineTool({
       return { error: 'No active pathway batch. Call begin_pathway first.' }
     }
     figma.endPathwayBatch()
-    if (figma.pathwayStyle !== 'publication') {
-      figma.setPathwayStyle('publication')
+    if (figma.pathwayStyle !== 'realistic' && figma.pathwayStyle !== 'publication') {
+      figma.setPathwayStyle('realistic')
     }
     return { status: 'batch ended', hint: 'Layout and rendering will be computed by the post-processing step' }
   }

@@ -1,12 +1,12 @@
 import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 
-import type { SceneNode } from '@signal-forge/scene-graph'
-import type { PathwayNodeData, PathwayProcessType } from '@signal-forge/scene-graph'
+import type { SceneNode, PathwayNodeData, PathwayProcessType } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
 import { SBGN_STYLE, type PathwayStyle } from './constants'
-import { hexToCKColor } from './utils'
+import { paintRealisticProcess as paintRealisticProcessEntry } from './processes-realistic'
+import { hexToCKColor, paintProcessSymbol } from './utils'
 
 export function paintProcess(
   ck: CanvasKit,
@@ -166,6 +166,10 @@ export function paintPathwayProcess(
   style: PathwayStyle,
   r: SkiaRenderer
 ): void {
+  if (style === 'realistic') {
+    paintRealisticProcessEntry(ck, canvas, node, data, r)
+    return
+  }
   const processType = data.processType
   if (!processType) {
     paintProcess(ck, canvas, node, data, style, r)
@@ -178,26 +182,4 @@ export function paintPathwayProcess(
     paintProcess(ck, canvas, node, data, style, r)
     console.warn(`[pathway] Unknown process type "${processType}", rendering as generic process`)
   }
-}
-
-function paintProcessSymbol(
-  ck: CanvasKit,
-  canvas: Canvas,
-  node: SceneNode,
-  symbol: string,
-  r: SkiaRenderer
-): void {
-  const font = r.sectionTitleFont
-  if (!font) return
-
-  const glyphs = font.getGlyphIDs(symbol)
-  const widths = font.getGlyphWidths(glyphs)
-  let textW = 0
-  for (let i = 0; i < widths.length; i++) textW += widths[i]
-
-  const textX = (node.width - textW) / 2
-  const textY = node.height / 2 + (textW > 0 ? textW * 0.35 : 0)
-
-  r.auxFill.setColor(ck.Color4f(0x55 / 255, 0x55 / 255, 0x55 / 255, 1))
-  canvas.drawText(symbol, textX, textY, r.auxFill, font)
 }
