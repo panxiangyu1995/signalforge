@@ -17,7 +17,7 @@ jobs:
 
       - uses: ./.github/actions/setup-bun
 
-      - run: bun run --filter @open-pencil/docs build
+      - run: bun run --filter @signal-forge/docs build
 
       - uses: cloudflare/wrangler-action@v3
         with:

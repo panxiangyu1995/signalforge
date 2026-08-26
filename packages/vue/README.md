@@ -1,8 +1,8 @@
-# @open-pencil/vue
+# @signal-forge/vue
 
 Headless Vue 3 SDK for building OpenPencil-powered editors.
 
-`@open-pencil/vue` sits on top of `@open-pencil/core` and provides:
+`@signal-forge/vue` sits on top of `@signal-forge/core` and provides:
 
 - Vue editor injection via `provideEditor()` / `useEditor()`
 - canvas integration via `useCanvas()`, `useCanvasInput()`, and `useTextEdit()`
@@ -14,15 +14,15 @@ The SDK is headless by design: it provides logic and structure, while your app o
 ## Install
 
 ```bash
-bun add @open-pencil/vue @open-pencil/core canvaskit-wasm
+bun add @signal-forge/vue @signal-forge/core canvaskit-wasm
 ```
 
 ## Quick start
 
 ```vue
 <script setup lang="ts">
-import { createEditor } from '@open-pencil/core/editor'
-import { provideEditor } from '@open-pencil/vue'
+import { createEditor } from '@signal-forge/core/editor'
+import { provideEditor } from '@signal-forge/vue'
 
 const editor = createEditor({
   width: 1200,
@@ -51,7 +51,7 @@ provideEditor(editor)
 Use `provideEditor(editor)` once near the top of your subtree.
 
 ```ts
-import { provideEditor } from '@open-pencil/vue'
+import { provideEditor } from '@signal-forge/vue'
 
 provideEditor(editor)
 ```
@@ -59,7 +59,7 @@ provideEditor(editor)
 Read it anywhere below with `useEditor()`.
 
 ```ts
-import { useEditor } from '@open-pencil/vue'
+import { useEditor } from '@signal-forge/vue'
 
 const editor = useEditor()
 ```
@@ -212,9 +212,9 @@ These are mostly useful when extending SDK primitives rather than building from 
 
 ```vue
 <script setup lang="ts">
-import { provideEditor } from '@open-pencil/vue'
+import { provideEditor } from '@signal-forge/vue'
 
-import type { Editor } from '@open-pencil/core/editor'
+import type { Editor } from '@signal-forge/core/editor'
 
 const props = defineProps<{
   editor: Editor
@@ -231,7 +231,7 @@ provideEditor(props.editor)
 ### Read selection state
 
 ```ts
-import { useSelectionState } from '@open-pencil/vue'
+import { useSelectionState } from '@signal-forge/vue'
 
 const { hasSelection, selectedCount, selectedNode } = useSelectionState()
 ```
@@ -239,7 +239,7 @@ const { hasSelection, selectedCount, selectedNode } = useSelectionState()
 ### Build a menu
 
 ```ts
-import { useMenuModel } from '@open-pencil/vue'
+import { useMenuModel } from '@signal-forge/vue'
 
 const { appMenu, canvasMenu } = useMenuModel()
 ```

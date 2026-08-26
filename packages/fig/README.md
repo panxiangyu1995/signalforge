@@ -1,12 +1,12 @@
-# @open-pencil/fig
+# @signal-forge/fig
 
 `.fig` document policy package for OpenPencil.
 
-This package currently exposes low-level `fig-kiwi` container read/write helpers and remains the staging area for the next package-split stage. Use `@open-pencil/core` for production SceneGraph `.fig` read/write APIs until higher-level behavior moves here.
+This package currently exposes low-level `fig-kiwi` container read/write helpers and remains the staging area for the next package-split stage. Use `@signal-forge/core` for production SceneGraph `.fig` read/write APIs until higher-level behavior moves here.
 
 Current ownership:
 
-- `readFigContainer()` / `writeFigContainer()` wrappers over `@open-pencil/kiwi` container helpers
+- `readFigContainer()` / `writeFigContainer()` wrappers over `@signal-forge/kiwi` container helpers
 - `.fig` document source typing
 
 Planned ownership:
@@ -19,7 +19,7 @@ Planned ownership:
 
 Non-goals:
 
-- low-level Kiwi schema/runtime/codec internals — use `@open-pencil/kiwi`
+- low-level Kiwi schema/runtime/codec internals — use `@signal-forge/kiwi`
 - editor actions, renderer behavior, Vue/app UI, CLI formatting, or MCP transport
 
 See `packages/docs/development/fig-package-plan.md` for the staged migration plan.

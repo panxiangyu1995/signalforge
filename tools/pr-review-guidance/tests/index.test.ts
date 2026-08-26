@@ -93,8 +93,8 @@ describe('monitorPRReviewGuidance', () => {
       env: {
         GITHUB_API_URL: 'https://example.test',
         GITHUB_EVENT_PATH: eventPath,
-        GITHUB_REPOSITORY: 'signal-forge/open-pencil',
-        GITHUB_REPOSITORY_OWNER: 'open-pencil',
+        GITHUB_REPOSITORY: 'panxiangyu1995/signalforge',
+        GITHUB_REPOSITORY_OWNER: 'panxiangyu1995',
         GITHUB_TOKEN: 'token'
       },
       fetchImpl: (async (input, init) => {
@@ -109,7 +109,7 @@ describe('monitorPRReviewGuidance', () => {
       log: (message) => messages.push(message)
     })
 
-    expect(requests).toEqual(['GET https://example.test/repos/signal-forge/signal-forge/pulls/294'])
+    expect(requests).toEqual(['GET https://example.test/repos/panxiangyu1995/signalforge/pulls/294'])
     expect(messages.join('\n')).toContain('No automatic label, comment, or close was applied')
   })
 
@@ -126,8 +126,8 @@ describe('monitorPRReviewGuidance', () => {
       env: {
         GITHUB_API_URL: 'https://example.test',
         GITHUB_EVENT_PATH: eventPath,
-        GITHUB_REPOSITORY: 'signal-forge/open-pencil',
-        GITHUB_REPOSITORY_OWNER: 'open-pencil',
+        GITHUB_REPOSITORY: 'panxiangyu1995/signalforge',
+        GITHUB_REPOSITORY_OWNER: 'panxiangyu1995',
         GITHUB_TOKEN: 'token'
       },
       fetchImpl: (async (input, init) => {

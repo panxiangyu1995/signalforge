@@ -66,4 +66,4 @@ Yoga поддерживается Meta, проверен на миллиарда
 
 | Технология | Назначение | Этап |
 |-----------|---------|-------|
-| CSS Grid в Yoga | Макет на основе сетки | ✅ Включено через [форк Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@signal-forge/yoga-layout`) |
+| CSS Grid в Yoga | Макет на основе сетки | ✅ Включено через [форк Yoga](https://github.com/panxiangyu1995/yoga/tree/grid) (`@signal-forge/yoga-layout`) |

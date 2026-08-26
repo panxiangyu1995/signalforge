@@ -86,7 +86,7 @@ Server starts on port 7600 (override with `PORT` env var). Endpoints:
 Teach your AI coding agent to use SignalForge tools:
 
 ```sh
-npx skills add open-pencil/skills@open-pencil
+npx skills add panxiangyu1995/skills@panxiangyu1995
 ```
 
 Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh). The skill covers the CLI, MCP tools, JSX rendering, eval, and the running app's automation bridge.

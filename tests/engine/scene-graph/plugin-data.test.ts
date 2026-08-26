@@ -104,7 +104,7 @@ describe('plugin data', () => {
     expect(parsedFrame).toBeDefined()
     // Private plugin data roundtrips directly in pluginData array
     expect(parsedFrame?.pluginData).toContainEqual({
-      pluginId: 'open-pencil',
+      pluginId: 'signal-forge',
       key: 'okhcl',
       value: '{"l":0.7,"c":0.12,"h":240}'
     })
@@ -149,9 +149,9 @@ describe('plugin data', () => {
 describe('plugin data deduplication', () => {
   test('deduplicateNodeChangePluginData removes duplicate pluginData entries', () => {
     const entries = [
-      { pluginID: 'open-pencil', key: 'textDirection', value: 'RTL' },
-      { pluginID: 'open-pencil', key: 'textDirection', value: 'RTL' },
-      { pluginID: 'open-pencil', key: 'textDirection', value: 'RTL' }
+      { pluginID: 'signal-forge', key: 'textDirection', value: 'RTL' },
+      { pluginID: 'signal-forge', key: 'textDirection', value: 'RTL' },
+      { pluginID: 'signal-forge', key: 'textDirection', value: 'RTL' }
     ]
     const changes: NodeChange[] = [doc(), canvas(), node('FRAME', 10, 1, { pluginData: entries })]
 
@@ -162,7 +162,7 @@ describe('plugin data deduplication', () => {
     )
     expect(frameChange.pluginData).toHaveLength(1)
     expect(expectDefined(frameChange.pluginData?.[0], 'plugin data entry')).toEqual({
-      pluginID: 'open-pencil',
+      pluginID: 'signal-forge',
       key: 'textDirection',
       value: 'RTL'
     })
@@ -170,8 +170,8 @@ describe('plugin data deduplication', () => {
 
   test('importNodeChanges with unique pluginData entries preserves all', () => {
     const entries = [
-      { pluginID: 'open-pencil', key: 'textDirection', value: 'RTL' },
-      { pluginID: 'open-pencil', key: 'layoutDirection', value: 'LTR' },
+      { pluginID: 'signal-forge', key: 'textDirection', value: 'RTL' },
+      { pluginID: 'signal-forge', key: 'layoutDirection', value: 'LTR' },
       { pluginID: 'my-plugin', key: 'customKey', value: 'hello' }
     ]
 
@@ -185,12 +185,12 @@ describe('plugin data deduplication', () => {
     const frame = graph.getChildren(page.id)[0]
     expect(frame.pluginData).toHaveLength(3)
     expect(frame.pluginData).toContainEqual({
-      pluginId: 'open-pencil',
+      pluginId: 'signal-forge',
       key: 'textDirection',
       value: 'RTL'
     })
     expect(frame.pluginData).toContainEqual({
-      pluginId: 'open-pencil',
+      pluginId: 'signal-forge',
       key: 'layoutDirection',
       value: 'LTR'
     })
@@ -202,7 +202,7 @@ describe('plugin data deduplication', () => {
   })
 
   test('importNodeChanges with single pluginData entry preserves it (zero-copy path)', () => {
-    const entries = [{ pluginID: 'open-pencil', key: 'textDirection', value: 'LTR' }]
+    const entries = [{ pluginID: 'signal-forge', key: 'textDirection', value: 'LTR' }]
 
     const graph = importNodeChanges([
       doc(),
@@ -214,7 +214,7 @@ describe('plugin data deduplication', () => {
     const frame = graph.getChildren(page.id)[0]
     expect(frame.pluginData).toHaveLength(1)
     expect(frame.pluginData[0]).toEqual({
-      pluginId: 'open-pencil',
+      pluginId: 'signal-forge',
       key: 'textDirection',
       value: 'LTR'
     })

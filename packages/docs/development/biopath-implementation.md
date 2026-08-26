@@ -30,7 +30,7 @@ Before detailing changes, here is what we're building on:
 
 **Strategy**: Extend the existing flat `SceneNode` pattern rather than creating discriminated unions. Add new `NodeType` values and use `pluginData` for pathway-specific fields (avoids bloating the core interface).
 
-**Why `pluginData` over new fields**: The current `SceneNode` is already ~80 fields. Adding 10+ pathway-specific fields (glyphType, arcType, stateVariables, etc.) would further bloat every node. Instead, store pathway data in the existing `pluginData: PluginDataEntry[]` field with a namespaced key like `open-pencil:pathway`. The renderer and tools read/write this data through helper functions.
+**Why `pluginData` over new fields**: The current `SceneNode` is already ~80 fields. Adding 10+ pathway-specific fields (glyphType, arcType, stateVariables, etc.) would further bloat every node. Instead, store pathway data in the existing `pluginData: PluginDataEntry[]` field with `pluginId: 'signal-forge'` and a key like `'pathway'`. The renderer and tools read/write this data through helper functions.
 
 **Files to modify**:
 
@@ -103,7 +103,8 @@ export const CONTAINER_TYPES = new Set<NodeType>([
 Helper functions for reading/writing pathway-specific data from `pluginData`:
 
 ```typescript
-export const PATHWAY_PLUGIN_KEY = 'open-pencil:pathway'
+export const PATHWAY_PLUGIN_ID = 'signal-forge'
+export const PATHWAY_PLUGIN_KEY = 'pathway'
 
 export type PathwayGlyphType =
   | 'macromolecule'

@@ -11,7 +11,7 @@ The CLI lets you explore design documents without opening the editor. Every comm
 ```sh
 npm install -g @signal-forge/cli
 # or
-brew install open-pencil/tap/open-pencil
+brew install panxiangyu1995/tap/signalforge
 ```
 :::
 

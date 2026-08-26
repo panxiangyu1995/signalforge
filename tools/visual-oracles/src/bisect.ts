@@ -150,7 +150,7 @@ async function bisect(indices: number[], depth: number): Promise<void> {
 async function compareSubset(indices: number[], depth: number): Promise<BisectResult> {
   const stem = `d${depth}-${indices[0]}-${indices.at(-1)}-${indices.length}`
   const figmaPath = `${outputDir}/${stem}-figma.png`
-  const signalForgePath = `${outputDir}/${stem}-open-pencil.png`
+  const signalForgePath = `${outputDir}/${stem}-signalforge.png`
 
   await exportFigmaSubset(figmaRootId, indices, figmaPath)
   await exportSignalForgeSubset(indices, signalForgePath)

@@ -16,12 +16,12 @@
     "paths": {
       "#vue/*": ["./src/*", "./src/*.vue"],
       "#core/*": ["../core/src/*"],
-      "@open-pencil/vue": ["./src/index.ts"],
-      "@open-pencil/core": ["../core/src/index.ts"],
-      "@open-pencil/core/*": ["../core/src/*"],
-      "@open-pencil/core/editor": ["../core/src/editor/index.ts"],
-      "@open-pencil/core/render": ["../core/src/render/index.ts"],
-      "@open-pencil/core/color": ["../core/src/color.ts"]
+      "@signal-forge/vue": ["./src/index.ts"],
+      "@signal-forge/core": ["../core/src/index.ts"],
+      "@signal-forge/core/*": ["../core/src/*"],
+      "@signal-forge/core/editor": ["../core/src/editor/index.ts"],
+      "@signal-forge/core/render": ["../core/src/render/index.ts"],
+      "@signal-forge/core/color": ["../core/src/color.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts", "../core/src/global.d.ts"],

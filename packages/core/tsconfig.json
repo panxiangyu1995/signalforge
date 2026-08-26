@@ -16,8 +16,8 @@
     "rootDir": "src",
     "paths": {
       "#core/*": ["./src/*"],
-      "@open-pencil/core": ["./src/index.ts"],
-      "@open-pencil/core/*": ["./src/*"]
+      "@signal-forge/core": ["./src/index.ts"],
+      "@signal-forge/core/*": ["./src/*"]
     }
   },
   "include": ["src"]

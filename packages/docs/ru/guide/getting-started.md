@@ -6,7 +6,7 @@ SignalForge работает в браузере — установка не т�
 
 ## Скачать десктоп-приложение
 
-Собранные бинарные файлы для macOS, Windows и Linux доступны на [странице релизов](https://github.com/open-pencil/open-pencil/releases/latest).
+Собранные бинарные файлы для macOS, Windows и Linux доступны на [странице релизов](https://github.com/panxiangyu1995/signalforge/releases/latest).
 
 | Платформа | Загрузка |
 |----------|----------|
@@ -20,7 +20,7 @@ SignalForge работает в браузере — установка не т�
 ## macOS через Homebrew
 
 ```sh
-brew install open-pencil/tap/open-pencil
+brew install panxiangyu1995/tap/signalforge
 ```
 
 Устанавливает последний подписанный релиз для macOS (Apple Silicon и Intel). Tap автоматически обновляется с каждым релизом.
@@ -35,7 +35,7 @@ brew install open-pencil/tap/open-pencil
 ## Установка
 
 ```sh
-git clone https://github.com/open-pencil/open-pencil.git
+git clone https://github.com/panxiangyu1995/signalforge.git
 cd signal-forge
 bun install
 ```

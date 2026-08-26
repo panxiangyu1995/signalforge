@@ -44,7 +44,7 @@ describe('@signal-forge/dom-css runtime', () => {
     const html = String(bundle.files[0]?.content)
 
     expect(html).toContain('<!doctype html>')
-    expect(html).toContain('data-open-pencil-html="standalone"')
+    expect(html).toContain('data-signalforge-html="standalone"')
     expect(html).toContain('SignalForge')
     expect(html).not.toContain('@tailwindcss/browser@4')
   })

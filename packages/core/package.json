@@ -4,7 +4,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/open-pencil/open-pencil.git",
+    "url": "git+https://github.com/panxiangyu1995/signalforge.git",
     "directory": "packages/core"
   },
   "files": [

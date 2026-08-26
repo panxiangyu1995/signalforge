@@ -18,7 +18,7 @@ export default defineConfig({
       '@hono/node-server',
       '@modelcontextprotocol/sdk',
       '@signal-forge/core',
-      /^@open-pencil\/core\//,
+      /^@signal-forge\/core\//,
       'hono',
       /^hono\//,
       'package-manager-detector',

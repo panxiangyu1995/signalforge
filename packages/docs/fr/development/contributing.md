@@ -62,7 +62,7 @@ bun run check
 
 ### Conventions pour agents IA
 
-Les développeurs et agents IA doivent lire `AGENTS.md` à la racine du repo ([voir sur GitHub](https://github.com/open-pencil/open-pencil/blob/master/AGENTS.md)). Couvre le rendu, le graphe de scène, les composants et instances, le layout, l'UI, le format de fichier, les conventions Tauri et les problèmes connus.
+Les développeurs et agents IA doivent lire `AGENTS.md` à la racine du repo ([voir sur GitHub](https://github.com/panxiangyu1995/signalforge/blob/master/AGENTS.md)). Couvre le rendu, le graphe de scène, les composants et instances, le layout, l'UI, le format de fichier, les conventions Tauri et les problèmes connus.
 
 ## Apporter des changements
 

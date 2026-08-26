@@ -1,13 +1,13 @@
-# @open-pencil/kiwi
+# @signal-forge/kiwi
 
 Scene-graph-agnostic Kiwi runtime utilities for OpenPencil.
 
-This package owns pure Kiwi schema parsing, Figma Kiwi schema data, low-level Figma message encode/decode, FIG Kiwi container helpers, GUID formatting, and raw `.fig` parse helpers. `.fig` import/export policy stays in `@open-pencil/core`: SceneGraph conversion, raw metadata invalidation, component/instance interpretation, and app/CLI document I/O are not part of this package.
+This package owns pure Kiwi schema parsing, Figma Kiwi schema data, low-level Figma message encode/decode, FIG Kiwi container helpers, GUID formatting, and raw `.fig` parse helpers. `.fig` import/export policy stays in `@signal-forge/core`: SceneGraph conversion, raw metadata invalidation, component/instance interpretation, and app/CLI document I/O are not part of this package.
 
 ## Installation
 
 ```sh
-bun add @open-pencil/kiwi
+bun add @signal-forge/kiwi
 ```
 
 ## Package-local checks
@@ -28,7 +28,7 @@ Package scripts:
 ## Schema runtime
 
 ```ts
-import { compileSchema, parseSchema, validateSchema } from '@open-pencil/kiwi/schema-runtime'
+import { compileSchema, parseSchema, validateSchema } from '@signal-forge/kiwi/schema-runtime'
 
 const schema = parseSchema(`
 message Point {
@@ -46,7 +46,7 @@ const point = codec.decodeMessage(bytes)
 ## Figma Kiwi codec
 
 ```ts
-import { createNodeChangesMessage, encodeMessage, initCodec } from '@open-pencil/kiwi/fig/codec'
+import { createNodeChangesMessage, encodeMessage, initCodec } from '@signal-forge/kiwi/fig/codec'
 
 await initCodec()
 
@@ -68,7 +68,7 @@ Boolean operation payloads use Figma's Kiwi enum names. SceneGraph `EXCLUDE` is 
 ## FIG Kiwi containers
 
 ```ts
-import { buildFigKiwi, parseFigKiwiChunks } from '@open-pencil/kiwi/fig/container'
+import { buildFigKiwi, parseFigKiwiChunks } from '@signal-forge/kiwi/fig/container'
 
 const container = buildFigKiwi(new Uint8Array([1, 2, 3]))
 const chunks = parseFigKiwiChunks(container)
@@ -77,7 +77,7 @@ const chunks = parseFigKiwiChunks(container)
 ## Raw `.fig` parsing
 
 ```ts
-import { parseFigBytes } from '@open-pencil/kiwi/fig/parse'
+import { parseFigBytes } from '@signal-forge/kiwi/fig/parse'
 
 const parsed = await parseFigBytes(await Bun.file('design.fig').arrayBuffer())
 
@@ -86,12 +86,12 @@ for (const canvas of parsed.canvases) {
 }
 ```
 
-`parseFigBytes()` returns structural `NodeChange` data, blobs, images, schema bytes, and container metadata. Use `@open-pencil/core` for converting that data into an editable `SceneGraph`.
+`parseFigBytes()` returns structural `NodeChange` data, blobs, images, schema bytes, and container metadata. Use `@signal-forge/core` for converting that data into an editable `SceneGraph`.
 
 ## GUID helpers
 
 ```ts
-import { guidToString, stringToGuid } from '@open-pencil/kiwi/fig/guid'
+import { guidToString, stringToGuid } from '@signal-forge/kiwi/fig/guid'
 
 const id = guidToString({ sessionID: 1, localID: 42 })
 const guid = stringToGuid('1:42')
@@ -99,12 +99,12 @@ const guid = stringToGuid('1:42')
 
 ## Public subpaths
 
-- `@open-pencil/kiwi`
-- `@open-pencil/kiwi/schema-runtime`
-- `@open-pencil/kiwi/fig`
-- `@open-pencil/kiwi/fig/codec`
-- `@open-pencil/kiwi/fig/container`
-- `@open-pencil/kiwi/fig/guid`
-- `@open-pencil/kiwi/fig/parse`
+- `@signal-forge/kiwi`
+- `@signal-forge/kiwi/schema-runtime`
+- `@signal-forge/kiwi/fig`
+- `@signal-forge/kiwi/fig/codec`
+- `@signal-forge/kiwi/fig/container`
+- `@signal-forge/kiwi/fig/guid`
+- `@signal-forge/kiwi/fig/parse`
 
-`@open-pencil/kiwi` must not import `@open-pencil/core`, `#core/*`, app code, Vue code, CLI code, or MCP code.
+`@signal-forge/kiwi` must not import `@signal-forge/core`, `#core/*`, app code, Vue code, CLI code, or MCP code.

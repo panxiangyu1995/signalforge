@@ -19,6 +19,6 @@ export function provideCanvas(ctx: CanvasContext) {
 
 export function useCanvasContext(): CanvasContext {
   const ctx = inject(CANVAS_KEY)
-  if (!ctx) throw new Error('[open-pencil] useCanvasContext() called outside <CanvasRoot>')
+  if (!ctx) throw new Error('[signalforge] useCanvasContext() called outside <CanvasRoot>')
   return ctx
 }

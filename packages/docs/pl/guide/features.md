@@ -132,7 +132,7 @@ P2P przez WebRTC — bez serwera. Udostępnij link i edytujcie razem.
 **Homebrew:**
 
 ```sh
-brew install open-pencil/tap/open-pencil
+brew install panxiangyu1995/tap/signalforge
 ```
 
 ## Google Fonts Fallback

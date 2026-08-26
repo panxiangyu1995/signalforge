@@ -1,6 +1,6 @@
 import type { Color } from '@signal-forge/scene-graph/primitives'
 
-const VAR_SYMBOL = Symbol.for('open-pencil.variable')
+const VAR_SYMBOL = Symbol.for('signal-forge.variable')
 
 export type VarDef =
   | string

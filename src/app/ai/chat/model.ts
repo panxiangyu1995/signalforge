@@ -46,7 +46,7 @@ export function createLanguageModel(config: ModelConfig): LanguageModel {
         fetch,
         headers: {
           'X-OpenRouter-Title': 'SignalForge',
-          'HTTP-Referer': 'https://github.com/open-pencil/open-pencil'
+          'HTTP-Referer': 'https://github.com/panxiangyu1995/signalforge'
         }
       })
       return openrouter(effectiveModelID)

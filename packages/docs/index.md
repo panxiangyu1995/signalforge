@@ -13,10 +13,10 @@ hero:
       link: https://app.signalforge.dev/demo
     - theme: alt
       text: Download
-      link: https://github.com/open-pencil/open-pencil/releases/latest
+      link: https://github.com/panxiangyu1995/signalforge/releases/latest
     - theme: alt
       text: GitHub
-      link: https://github.com/open-pencil/open-pencil
+      link: https://github.com/panxiangyu1995/signalforge
 
 features:
   - icon: 📂

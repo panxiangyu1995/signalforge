@@ -11,7 +11,7 @@ export default defineConfig({
   outDir: './dist',
   treeshake: false,
   deps: {
-    neverBundle: ['@signal-forge/core', /^@open-pencil\/core\//, 'canvaskit-wasm', /^node:/],
+    neverBundle: ['@signal-forge/core', /^@signal-forge\/core\//, 'canvaskit-wasm', /^node:/],
     onlyBundle: false
   }
 })

@@ -11,7 +11,7 @@ CLI pozwala eksplorować pliki `.fig` bez otwierania edytora. Każde polecenie d
 ```sh
 npm install -g @signal-forge/cli
 # lub
-brew install open-pencil/tap/open-pencil
+brew install panxiangyu1995/tap/signalforge
 ```
 :::
 

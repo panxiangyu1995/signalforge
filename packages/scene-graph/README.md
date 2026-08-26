@@ -1,4 +1,4 @@
-# @open-pencil/scene-graph
+# @signal-forge/scene-graph
 
 Shared OpenPencil design document model.
 

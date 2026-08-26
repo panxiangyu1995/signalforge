@@ -77,7 +77,7 @@ component nesting.
 
 ### AI Agent Conventions
 
-Developers and AI agents working on the codebase should read `AGENTS.md` in the repo root ([view on GitHub](https://github.com/open-pencil/open-pencil/blob/master/AGENTS.md)). Covers rendering, scene graph, components & instances, layout, UI, file format, Tauri conventions, and known issues.
+Developers and AI agents working on the codebase should read `AGENTS.md` in the repo root ([view on GitHub](https://github.com/panxiangyu1995/signalforge/blob/master/AGENTS.md)). Covers rendering, scene graph, components & instances, layout, UI, file format, Tauri conventions, and known issues.
 
 ## Making Changes
 

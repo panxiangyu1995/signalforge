@@ -40,10 +40,10 @@ export const rootThemeConfig = (): DefaultTheme.Config => ({
     ],
   },
 
-  socialLinks: [{ icon: 'github', link: 'https://github.com/open-pencil/open-pencil' }],
+  socialLinks: [{ icon: 'github', link: 'https://github.com/panxiangyu1995/signalforge' }],
 
   editLink: {
-    pattern: 'https://github.com/open-pencil/open-pencil/edit/main/packages/docs/:path',
+    pattern: 'https://github.com/panxiangyu1995/signalforge/edit/main/packages/docs/:path',
   },
 
   footer: {

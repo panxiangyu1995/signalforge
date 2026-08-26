@@ -124,7 +124,7 @@ transports.ts (createChatSessionManager)
 
 **开发模式（项目内）**：
 ```
-.open-pencil/.logs/
+.signalforge/.logs/
   2026-08-11/
     14-30-25_anthropic.log      ← HH-mm-ss_providerID.log
     14-35-10_openai.log

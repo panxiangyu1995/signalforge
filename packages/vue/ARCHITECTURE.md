@@ -1,4 +1,4 @@
-# @open-pencil/vue architecture
+# @signal-forge/vue architecture
 
 ## Folder conventions
 

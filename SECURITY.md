@@ -6,7 +6,7 @@ Please do not report security vulnerabilities through public GitHub issues or pu
 
 If you believe you have found a security issue in SignalForge, report it privately using GitHub Security Advisories:
 
-https://github.com/open-pencil/open-pencil/security/advisories/new
+https://github.com/panxiangyu1995/signalforge/security/advisories/new
 
 Please include as much detail as possible:
 

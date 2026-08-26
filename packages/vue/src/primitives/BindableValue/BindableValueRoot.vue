@@ -31,7 +31,7 @@ const injectedProvider = useBindingProvider<V>()
 const resolvedProvider = providerProp ?? injectedProvider
 if (!resolvedProvider) {
   throw new Error(
-    '[open-pencil] BindableValueRoot requires a provider prop or provideBindingProvider()'
+    '[signalforge] BindableValueRoot requires a provider prop or provideBindingProvider()'
   )
 }
 const provider: BindingProvider<V> = resolvedProvider

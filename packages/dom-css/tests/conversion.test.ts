@@ -304,7 +304,7 @@ describe('@signal-forge/dom-css conversion', () => {
 
     expect(image.fills[0]).toBeUndefined()
     expect(image.pluginData).toContainEqual({
-      pluginId: 'open-pencil-dom-css',
+      pluginId: 'signal-forge-dom-css',
       key: 'image-source-url',
       value: 'https://example.com/hero.png'
     })

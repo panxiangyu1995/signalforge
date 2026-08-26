@@ -331,8 +331,8 @@ async function exportStandaloneHTML(
       fontFaceAssets(document, options)
     ])
     body = extracted.html
-    const cssPath = `${options.assetBasePath}/openpencil.css`
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${stylesheetLink(cssPath)}</head><body><main data-open-pencil-html="standalone" class="op-stage">${body}</main></body></html>`
+    const cssPath = `${options.assetBasePath}/signalforge.css`
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${stylesheetLink(cssPath)}</head><body><main data-signalforge-html="standalone" class="op-stage">${body}</main></body></html>`
     return {
       entrypoint: 'index.html',
       files: [
@@ -344,7 +344,7 @@ async function exportStandaloneHTML(
     }
   }
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${styleTag(css)}</head><body><main data-open-pencil-html="standalone" class="op-stage">${body}</main></body></html>`
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${styleTag(css)}</head><body><main data-signalforge-html="standalone" class="op-stage">${body}</main></body></html>`
   return { entrypoint: 'index.html', files: [{ path: 'index.html', content: html }] }
 }
 

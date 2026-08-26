@@ -46,34 +46,34 @@
       "tinykeys": [
         "./node_modules/tinykeys/dist/tinykeys.d.ts"
       ],
-      "@open-pencil/vue": [
+      "@signal-forge/vue": [
         "./packages/vue/src/index.ts"
       ],
-      "@open-pencil/core": [
+      "@signal-forge/core": [
         "./packages/core/src/index.ts"
       ],
-      "@open-pencil/core/*": [
+      "@signal-forge/core/*": [
         "./packages/core/src/*"
       ],
-      "@open-pencil/dom-css": [
+      "@signal-forge/dom-css": [
         "./packages/dom-css/src/index.ts"
       ],
       "#scene-graph/*": [
         "./packages/scene-graph/src/*"
       ],
-      "@open-pencil/scene-graph": [
+      "@signal-forge/scene-graph": [
         "./packages/scene-graph/src/index.ts"
       ],
-      "@open-pencil/scene-graph/*": [
+      "@signal-forge/scene-graph/*": [
         "./packages/scene-graph/src/*"
       ],
       "#pen/*": [
         "./packages/pen/src/*"
       ],
-      "@open-pencil/pen": [
+      "@signal-forge/pen": [
         "./packages/pen/src/index.ts"
       ],
-      "@open-pencil/pen/*": [
+      "@signal-forge/pen/*": [
         "./packages/pen/src/*"
       ]
     }

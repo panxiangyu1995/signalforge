@@ -11,7 +11,8 @@ import {
 } from './css-values'
 import type { DesignDocument, DesignNode, DesignStyleDeclaration } from './types'
 
-const DOM_CSS_PLUGIN_ID = 'open-pencil-dom-css'
+const SIGNAL_FORGE_DOM_CSS_PLUGIN_ID = 'signal-forge-dom-css'
+const LEGACY_DOM_CSS_PLUGIN_ID = 'open-pencil-dom-css'
 const IMAGE_SOURCE_URL_KEY = 'image-source-url'
 
 export interface SceneGraphToDesignOptions {
@@ -217,7 +218,9 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 function imageSourceURL(node: SceneNode): string | undefined {
   return node.pluginData.find(
-    (entry) => entry.pluginId === DOM_CSS_PLUGIN_ID && entry.key === IMAGE_SOURCE_URL_KEY
+    (entry) =>
+      (entry.pluginId === SIGNAL_FORGE_DOM_CSS_PLUGIN_ID || entry.pluginId === LEGACY_DOM_CSS_PLUGIN_ID) &&
+      entry.key === IMAGE_SOURCE_URL_KEY
   )?.value
 }
 
@@ -227,7 +230,7 @@ function attrsForNode(
   includeSourceIds: boolean
 ): Record<string, string> {
   const attrs: Record<string, string> = includeSourceIds
-    ? { 'data-open-pencil-node-id': node.id }
+    ? { 'data-signalforge-node-id': node.id }
     : {}
   const sourceURL = imageSourceURL(node)
   if (sourceURL) attrs.src = sourceURL

@@ -18,7 +18,7 @@ export default defineConfig({
     moduleSideEffects: false
   },
   deps: {
-    neverBundle: ['@signal-forge/core', /^@open-pencil\/core\//, 'node:fs/promises'],
+    neverBundle: ['@signal-forge/core', /^@signal-forge\/core\//, 'node:fs/promises'],
     onlyBundle: false
   },
   outputOptions: {

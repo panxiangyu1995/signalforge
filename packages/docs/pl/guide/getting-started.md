@@ -6,7 +6,7 @@ SignalForge działa w przeglądarce — bez instalacji. Otwórz [app.signalforge
 
 ## Pobierz aplikację desktopową
 
-Binaria dla macOS, Windows i Linux na [stronie wydań](https://github.com/open-pencil/open-pencil/releases/latest).
+Binaria dla macOS, Windows i Linux na [stronie wydań](https://github.com/panxiangyu1995/signalforge/releases/latest).
 
 | Platforma | Pobieranie |
 |-----------|-----------|
@@ -19,7 +19,7 @@ Binaria dla macOS, Windows i Linux na [stronie wydań](https://github.com/open-p
 ## Kompilacja ze źródeł
 
 ```sh
-git clone https://github.com/open-pencil/open-pencil.git
+git clone https://github.com/panxiangyu1995/signalforge.git
 cd signal-forge
 bun install
 bun run dev

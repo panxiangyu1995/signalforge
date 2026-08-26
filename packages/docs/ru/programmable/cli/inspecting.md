@@ -11,7 +11,7 @@ CLI позволяет исследовать дизайн-документы б
 ```sh
 npm install -g @signal-forge/cli
 # или
-brew install open-pencil/tap/open-pencil
+brew install panxiangyu1995/tap/signalforge
 ```
 :::
 

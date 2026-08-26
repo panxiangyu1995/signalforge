@@ -592,7 +592,7 @@ describe('@signal-forge/dom-css conversion', () => {
     expect(card.inlineStyle?.width).toBe('320px')
     expect(card.inlineStyle?.display).toBe('flex')
     expect(card.inlineStyle?.['flex-direction']).toBe('column')
-    expect(card.attrs['data-open-pencil-node-id']).toBeTruthy()
+    expect(card.attrs['data-signalforge-node-id']).toBeTruthy()
 
     const title = card.children[0]
     expect(title?.type).toBe('element')

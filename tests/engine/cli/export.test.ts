@@ -53,7 +53,7 @@ test('export CLI writes HTML with inline styles by default', async () => {
   expect(exitCode).toBe(0)
 
   const html = await Bun.file(output).text()
-  expect(html).toContain('data-open-pencil-node-id')
+  expect(html).toContain('data-signalforge-node-id')
   expect(html).toContain('style=')
   expect(html).toContain('display: flex')
 })
@@ -77,7 +77,7 @@ test('export CLI can write HTML styles as Tailwind classes', async () => {
   expect(exitCode).toBe(0)
 
   const html = await Bun.file(output).text()
-  expect(html).toContain('data-open-pencil-node-id')
+  expect(html).toContain('data-signalforge-node-id')
   expect(html).toContain('class="')
   expect(html).toContain('flex')
   expect(html).not.toContain('style=')
@@ -103,7 +103,7 @@ test('export CLI can write standalone HTML', async () => {
 
   const html = await Bun.file(output).text()
   expect(html).toContain('<!doctype html>')
-  expect(html).toContain('data-open-pencil-html="standalone"')
+  expect(html).toContain('data-signalforge-html="standalone"')
   expect(html).toContain('position:relative')
   expect(html).toContain('position: absolute')
   expect(html).not.toContain('@tailwindcss/browser@4')
@@ -160,9 +160,9 @@ test('export CLI can write external standalone HTML assets', async () => {
   expect(exitCode).toBe(0)
 
   const html = await Bun.file(output).text()
-  const cssPath = join(dir, 'card-external.assets', 'openpencil.css')
+  const cssPath = join(dir, 'card-external.assets', 'signalforge.css')
   const css = await Bun.file(cssPath).text()
-  expect(html).toContain('<link rel="stylesheet" href="card-external.assets/openpencil.css">')
+  expect(html).toContain('<link rel="stylesheet" href="card-external.assets/signalforge.css">')
   expect(html).not.toContain('<style>')
   expect(css).toContain('.flex')
   expect(css).toContain('.op-stage')

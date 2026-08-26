@@ -68,4 +68,4 @@ Yoga jest utrzymywana przez Metę, przetestowana na miliardach urządzeń React 
 
 | Technologia | Cel | Faza |
 |-----------|---------|-------|
-| CSS Grid w Yoga | Auto layout oparty na siatce | ✅ Obsługiwane przez [fork Yoga](https://github.com/open-pencil/yoga/tree/grid) (`@signal-forge/yoga-layout`) |
+| CSS Grid w Yoga | Auto layout oparty na siatce | ✅ Obsługiwane przez [fork Yoga](https://github.com/panxiangyu1995/yoga/tree/grid) (`@signal-forge/yoga-layout`) |

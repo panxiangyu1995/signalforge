@@ -70,7 +70,7 @@ height: type === 'PATHWAY_PROCESS' ? 24
 
 `packages/scene-graph/src/pathway-data.ts` — new file with:
 ```typescript
-export const PATHWAY_PLUGIN_ID = 'open-pencil'
+export const PATHWAY_PLUGIN_ID = 'signal-forge'
 export const PATHWAY_PLUGIN_KEY = 'pathway'
 
 // --- Enum types ---

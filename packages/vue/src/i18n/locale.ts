@@ -39,7 +39,8 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   'zh-CN': '中文（简体）'
 }
 
-const LOCALE_STORAGE_KEY = 'open-pencil-locale'
+const LEGACY_LOCALE_STORAGE_KEY = 'open-pencil-locale'
+const LOCALE_STORAGE_KEY = 'signalforge-locale'
 
 export const localeSetting = atom<Locale | undefined>(undefined)
 
@@ -57,7 +58,16 @@ export function setLocale(code: Locale) {
   getLocalStorage()?.setItem(LOCALE_STORAGE_KEY, code)
 }
 
-const saved = getLocalStorage()?.getItem(LOCALE_STORAGE_KEY) as Locale | null | undefined
+const storage = getLocalStorage()
+let saved = storage?.getItem(LOCALE_STORAGE_KEY) as Locale | null | undefined
+if (!saved && storage) {
+  const legacySaved = storage.getItem(LEGACY_LOCALE_STORAGE_KEY) as Locale | null
+  if (legacySaved) {
+    saved = legacySaved
+    storage.setItem(LOCALE_STORAGE_KEY, legacySaved)
+    storage.removeItem(LEGACY_LOCALE_STORAGE_KEY)
+  }
+}
 if (saved && AVAILABLE_LOCALES.includes(saved)) {
   localeSetting.set(saved)
 }

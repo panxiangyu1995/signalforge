@@ -3,8 +3,8 @@
 ## Setup
 
 ```bash
-git clone https://github.com/open-pencil/open-pencil.git
-cd open-pencil
+git clone https://github.com/panxiangyu1995/signalforge.git
+cd signalforge
 git clone https://github.com/open-pencil/vue-stream-markdown.git
 bun install
 ```

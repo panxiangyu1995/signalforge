@@ -25,7 +25,7 @@ Install the MCP package and register it with Claude Code:
 
 ```sh
 npm install -g @signal-forge/mcp
-claude mcp add --scope user open-pencil -- signalforge-mcp
+claude mcp add --scope user panxiangyu1995 -- signalforge-mcp
 ```
 
 Check the connection:
@@ -49,7 +49,7 @@ This is narrower than `--permission-mode bypassPermissions`, which skips prompts
 Example prompt:
 
 ```text
-Use the open-pencil MCP server to inspect the current page and create a small hero section on the canvas.
+Use the SignalForge MCP server to inspect the current page and create a small hero section on the canvas.
 ```
 
 ### Other MCP clients
@@ -131,7 +131,7 @@ Most tools accept optional `document_id` and `page_id` fields. Pass them explici
 Teach your AI coding agent to use SignalForge tools:
 
 ```sh
-npx skills add open-pencil/skills@open-pencil
+npx skills add panxiangyu1995/skills@panxiangyu1995
 ```
 
 Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh). The skill covers the CLI, MCP tools, JSX rendering, eval, and the running app's automation bridge.
