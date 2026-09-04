@@ -1,18 +1,31 @@
 import { describe, it, expect } from 'bun:test'
 
-import { SceneGraph } from '@signal-forge/scene-graph'
-
 import { FigmaAPI } from '@signal-forge/core/figma-api'
 import { BIOPATH_CORE_TOOLS, type ToolDef } from '@signal-forge/core/tools'
+import { SceneGraph, type SceneNode } from '@signal-forge/scene-graph'
+
+interface ToolResult {
+  id?: string
+  error?: string
+  warnings?: string[]
+  status?: string
+}
 
 function findTool(name: string): ToolDef {
-  const tool = BIOPATH_CORE_TOOLS.find(t => t.name === name)
+  const tool = BIOPATH_CORE_TOOLS.find((t) => t.name === name)
   expect(tool, `Tool "${name}" not found in BIOPATH_CORE_TOOLS`).toBeDefined()
-  return tool!
+  if (!tool) throw new Error(`Tool "${name}" not found in BIOPATH_CORE_TOOLS`)
+  return tool
+}
+
+function requiredNode(graph: SceneGraph, id: unknown): SceneNode {
+  if (typeof id !== 'string') throw new Error(`Expected node id string, received ${typeof id}`)
+  const node = graph.getNode(id)
+  if (!node) throw new Error(`Node "${id}" not found in graph`)
+  return node
 }
 
 describe('create_pathway Freeze Fix — Acceptance', () => {
-
   describe('A1: Atomic tools exist and have small params', () => {
     it('begin_pathway exists with no params', () => {
       const tool = findTool('begin_pathway')
@@ -82,7 +95,7 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const tool = findTool('end_pathway')
       const graph = new SceneGraph()
       const api = new FigmaAPI(graph)
-      const result = tool.execute(api, {}) as Record<string, unknown>
+      const result = tool.execute(api, {}) as ToolResult
       expect(result.error).toBeDefined()
     })
 
@@ -122,9 +135,10 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const graph = new SceneGraph()
       const api = new FigmaAPI(graph)
       const result = findTool('add_entity').execute(api, {
-        name: 'JAK2', glyph_type: 'macromolecule'
-      }) as Record<string, unknown>
-      const node = graph.getNode(result.id as string)!
+        name: 'JAK2',
+        glyph_type: 'macromolecule'
+      }) as ToolResult
+      const node = requiredNode(graph, result.id)
       expect(node.width).toBe(96)
       expect(node.height).toBe(48)
     })
@@ -133,9 +147,10 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const graph = new SceneGraph()
       const api = new FigmaAPI(graph)
       const result = findTool('add_entity').execute(api, {
-        name: 'ATP', glyph_type: 'simple_chemical'
-      }) as Record<string, unknown>
-      const node = graph.getNode(result.id as string)!
+        name: 'ATP',
+        glyph_type: 'simple_chemical'
+      }) as ToolResult
+      const node = requiredNode(graph, result.id)
       expect(node.width).toBe(48)
       expect(node.height).toBe(48)
     })
@@ -144,9 +159,10 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const graph = new SceneGraph()
       const api = new FigmaAPI(graph)
       const result = findTool('add_process').execute(api, {
-        name: 'R', process_type: 'process'
-      }) as Record<string, unknown>
-      const node = graph.getNode(result.id as string)!
+        name: 'R',
+        process_type: 'process'
+      }) as ToolResult
+      const node = requiredNode(graph, result.id)
       expect(node.width).toBe(24)
       expect(node.height).toBe(24)
     })
@@ -158,11 +174,14 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const api = new FigmaAPI(graph)
       findTool('add_compartment').execute(api, { name: 'Cytoplasm' })
       const result = findTool('add_entity').execute(api, {
-        name: 'JAK2', glyph_type: 'macromolecule', compartment: 'Cytoplasm'
-      }) as Record<string, unknown>
-      const node = graph.getNode(result.id as string)!
+        name: 'JAK2',
+        glyph_type: 'macromolecule',
+        compartment: 'Cytoplasm'
+      }) as ToolResult
+      const node = requiredNode(graph, result.id)
       expect(node.parentId).not.toBe(graph.getPages()[0].id)
-      const parent = graph.getNode(node.parentId!)!
+      if (!node.parentId) throw new Error('created entity has no parent')
+      const parent = requiredNode(graph, node.parentId)
       expect(parent.type).toBe('COMPARTMENT')
       expect(parent.name).toBe('Cytoplasm')
     })
@@ -171,10 +190,12 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const graph = new SceneGraph()
       const api = new FigmaAPI(graph)
       const result = findTool('add_entity').execute(api, {
-        name: 'X', glyph_type: 'macromolecule', compartment: 'NonExistent'
-      }) as Record<string, unknown>
+        name: 'X',
+        glyph_type: 'macromolecule',
+        compartment: 'NonExistent'
+      }) as ToolResult
       expect(result.warnings).toBeDefined()
-      expect((result.warnings as string[]).some(w => w.includes('not found'))).toBe(true)
+      expect(result.warnings?.some((w) => w.includes('not found'))).toBe(true)
     })
   })
 
@@ -185,8 +206,10 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       findTool('add_entity').execute(api, { name: 'JAK2', glyph_type: 'macromolecule' })
       findTool('add_process').execute(api, { name: 'R', process_type: 'process' })
       const result = findTool('add_arc').execute(api, {
-        source: 'JAK2', target: 'R', arc_type: 'consumption'
-      }) as Record<string, unknown>
+        source: 'JAK2',
+        target: 'R',
+        arc_type: 'consumption'
+      }) as ToolResult
       expect(result.id).toBeDefined()
       expect(result.error).toBeUndefined()
     })
@@ -195,10 +218,12 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const graph = new SceneGraph()
       const api = new FigmaAPI(graph)
       const result = findTool('add_arc').execute(api, {
-        source: 'Ghost', target: 'AlsoGhost', arc_type: 'consumption'
-      }) as Record<string, unknown>
+        source: 'Ghost',
+        target: 'AlsoGhost',
+        arc_type: 'consumption'
+      }) as ToolResult
       expect(result.error).toBeDefined()
-      expect((result.error as string).includes('not found')).toBe(true)
+      expect(result.error?.includes('not found')).toBe(true)
     })
 
     it('warns on ambiguous (duplicate) names (H5 fix)', () => {
@@ -208,10 +233,12 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       findTool('add_entity').execute(api, { name: 'STAT3', glyph_type: 'macromolecule' })
       findTool('add_process').execute(api, { name: 'R', process_type: 'process' })
       const result = findTool('add_arc').execute(api, {
-        source: 'STAT3', target: 'R', arc_type: 'catalysis'
-      }) as Record<string, unknown>
+        source: 'STAT3',
+        target: 'R',
+        arc_type: 'catalysis'
+      }) as ToolResult
       expect(result.warnings).toBeDefined()
-      expect((result.warnings as string[]).some(w => w.includes('Multiple'))).toBe(true)
+      expect(result.warnings?.some((w) => w.includes('Multiple'))).toBe(true)
     })
   })
 
@@ -254,34 +281,74 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       addEnt.execute(api, { name: 'pSTAT3', glyph_type: 'macromolecule', compartment: 'Nucleus' })
       addEnt.execute(api, { name: 'SOCS3', glyph_type: 'macromolecule', compartment: 'Cytoplasm' })
       addEnt.execute(api, { name: 'ATP', glyph_type: 'simple_chemical', compartment: 'Cytoplasm' })
-      addEnt.execute(api, { name: 'Target Gene', glyph_type: 'nucleic_acid_feature', compartment: 'Nucleus' })
+      addEnt.execute(api, {
+        name: 'Target Gene',
+        glyph_type: 'nucleic_acid_feature',
+        compartment: 'Nucleus'
+      })
 
-      addProc.execute(api, { name: 'JAK2 activation', process_type: 'process', compartment: 'Cytoplasm' })
-      addProc.execute(api, { name: 'STAT3 phosphorylation', process_type: 'process', compartment: 'Cytoplasm' })
+      addProc.execute(api, {
+        name: 'JAK2 activation',
+        process_type: 'process',
+        compartment: 'Cytoplasm'
+      })
+      addProc.execute(api, {
+        name: 'STAT3 phosphorylation',
+        process_type: 'process',
+        compartment: 'Cytoplasm'
+      })
       addProc.execute(api, { name: 'STAT3 dimerization', process_type: 'process' })
       addProc.execute(api, { name: 'Nuclear translocation', process_type: 'transport' })
-      addProc.execute(api, { name: 'Transcription', process_type: 'process', compartment: 'Nucleus' })
-      addProc.execute(api, { name: 'SOCS3 inhibition', process_type: 'process', compartment: 'Cytoplasm' })
+      addProc.execute(api, {
+        name: 'Transcription',
+        process_type: 'process',
+        compartment: 'Nucleus'
+      })
+      addProc.execute(api, {
+        name: 'SOCS3 inhibition',
+        process_type: 'process',
+        compartment: 'Cytoplasm'
+      })
 
       addArc.execute(api, { source: 'JAK2', target: 'JAK2 activation', arc_type: 'consumption' })
       addArc.execute(api, { source: 'ATP', target: 'JAK2 activation', arc_type: 'consumption' })
       addArc.execute(api, { source: 'JAK2 activation', target: 'JAK2', arc_type: 'production' })
-      addArc.execute(api, { source: 'JAK2', target: 'STAT3 phosphorylation', arc_type: 'catalysis' })
-      addArc.execute(api, { source: 'STAT3', target: 'STAT3 phosphorylation', arc_type: 'consumption' })
-      addArc.execute(api, { source: 'STAT3 phosphorylation', target: 'pSTAT3', arc_type: 'production' })
+      addArc.execute(api, {
+        source: 'JAK2',
+        target: 'STAT3 phosphorylation',
+        arc_type: 'catalysis'
+      })
+      addArc.execute(api, {
+        source: 'STAT3',
+        target: 'STAT3 phosphorylation',
+        arc_type: 'consumption'
+      })
+      addArc.execute(api, {
+        source: 'STAT3 phosphorylation',
+        target: 'pSTAT3',
+        arc_type: 'production'
+      })
       addArc.execute(api, { source: 'SOCS3', target: 'SOCS3 inhibition', arc_type: 'consumption' })
       addArc.execute(api, { source: 'SOCS3 inhibition', target: 'JAK2', arc_type: 'inhibition' })
       addArc.execute(api, { source: 'pSTAT3', target: 'Transcription', arc_type: 'catalysis' })
-      addArc.execute(api, { source: 'Transcription', target: 'Target Gene', arc_type: 'production' })
+      addArc.execute(api, {
+        source: 'Transcription',
+        target: 'Target Gene',
+        arc_type: 'production'
+      })
 
-      const endResult = end.execute(api, {}) as Record<string, unknown>
+      const endResult = end.execute(api, {}) as ToolResult
       expect(endResult.status).toBe('batch ended')
 
       const page = graph.getPages()[0]
-      let glyphCount = 0, processCount = 0, arcCount = 0, compCount = 0
+      let glyphCount = 0,
+        processCount = 0,
+        arcCount = 0,
+        compCount = 0
       const stack = [...page.childIds]
       while (stack.length > 0) {
-        const id = stack.pop()!
+        const id = stack.pop()
+        if (id === undefined) break
         const node = graph.getNode(id)
         if (!node) continue
         if (node.type === 'COMPARTMENT') compCount++
@@ -308,12 +375,12 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
       const entities = JSON.stringify([
         { name: 'A', glyph_type: 'macromolecule', compartment: 'C' },
         { name: 'B', glyph_type: 'macromolecule', compartment: 'C' },
-        { name: 'C_node', glyph_type: 'macromolecule', compartment: 'C' },
+        { name: 'C_node', glyph_type: 'macromolecule', compartment: 'C' }
       ])
       const processes = JSON.stringify([
         { name: 'P1', process_type: 'process', compartment: 'C' },
         { name: 'P2', process_type: 'process', compartment: 'C' },
-        { name: 'P3', process_type: 'process', compartment: 'C' },
+        { name: 'P3', process_type: 'process', compartment: 'C' }
       ])
       const arcs = JSON.stringify([
         { source: 'A', target: 'P1', arc_type: 'consumption' },
@@ -321,11 +388,11 @@ describe('create_pathway Freeze Fix — Acceptance', () => {
         { source: 'B', target: 'P2', arc_type: 'consumption' },
         { source: 'P2', target: 'C_node', arc_type: 'production' },
         { source: 'C_node', target: 'P3', arc_type: 'consumption' },
-        { source: 'P3', target: 'A', arc_type: 'production' },
+        { source: 'P3', target: 'A', arc_type: 'production' }
       ])
 
       const start = Date.now()
-      const result = tool.execute(api, { compartments, entities, processes, arcs }) as Record<string, unknown>
+      const result = tool.execute(api, { compartments, entities, processes, arcs }) as ToolResult
       const elapsed = Date.now() - start
 
       expect(elapsed).toBeLessThan(2000)

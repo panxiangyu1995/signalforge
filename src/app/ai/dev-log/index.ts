@@ -9,7 +9,7 @@ function serialize(data: unknown): string {
     if (raw.length > 4000) return raw.slice(0, 4000) + '...[truncated]'
     return raw
   } catch {
-    return String(data)
+    return '[unserializable]'
   }
 }
 
@@ -17,8 +17,14 @@ function write(level: string, tag: string, msg: string, data?: unknown): void {
   const line = `${timestamp()} [${level}] [${tag}] ${msg}`
   const dataStr = serialize(data)
   const full = dataStr ? line + ' | ' + dataStr : line
-  const fn = level === 'ERROR' ? console.error : level === 'WARN' ? console.warn : console.log
-  fn(`🔍 ${full}`)
+  const text = `🔍 ${full}`
+  if (level === 'ERROR') {
+    console.error(text)
+  } else if (level === 'WARN') {
+    console.warn(text)
+  } else {
+    console.debug(text)
+  }
 }
 
 export const aiLog = {
@@ -28,5 +34,7 @@ export const aiLog = {
   perf: (tag: string, msg: string, ms: number, data?: unknown): void => {
     write('PERF', tag, `${msg} ${ms.toFixed(1)}ms`, data)
   },
-  flush: (): void => { /* console is immediate */ },
+  flush: (): void => {
+    /* console is immediate */
+  }
 }

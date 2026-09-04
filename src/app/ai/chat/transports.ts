@@ -3,14 +3,20 @@ import { DirectChatTransport, stepCountIs, ToolLoopAgent } from 'ai'
 import type { ChatTransport, UIMessage } from 'ai'
 import type { ComputedRef, Ref } from 'vue'
 
-import { ACP_AGENTS } from '@signal-forge/core/constants'
+import { ACP_AGENTS, IS_BROWSER } from '@signal-forge/core/constants'
 import type { ACPAgentID, AIProviderID } from '@signal-forge/core/constants'
 
 import { createLanguageModel, resolveLanguageModelID } from '@/app/ai/chat/model'
-import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
-import { MAX_AGENT_STEPS, createAITools, recordStepUsage, resetBatchState, resetRunSteps } from '@/app/ai/tools'
-import { aiLog } from '@/app/ai/dev-log'
 import { chatPersistenceManager } from '@/app/ai/chat/persistence'
+import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
+import { aiLog } from '@/app/ai/dev-log'
+import {
+  MAX_AGENT_STEPS,
+  createAITools,
+  recordStepUsage,
+  resetBatchState,
+  resetRunSteps
+} from '@/app/ai/tools'
 import type { getActiveEditorStore } from '@/app/editor/active-store'
 
 type EditorStore = ReturnType<typeof getActiveEditorStore>
@@ -104,7 +110,7 @@ export function createToolLoopTransport({
     onStepFinish: ({ usage }) => {
       aiLog.info('ai-step', `step finish`, {
         inputTokens: usage.inputTokens ?? 0,
-        outputTokens: usage.outputTokens ?? 0,
+        outputTokens: usage.outputTokens ?? 0
       })
       recordStepUsage(
         {
@@ -175,7 +181,7 @@ export function createChatSessionManager({
   }
 
   async function setupPersistenceWatch() {
-    if (!chat || typeof window === 'undefined') return
+    if (!chat || !IS_BROWSER) return
     unwatchChat?.()
     lastSavedLength = chat.messages.length
 
@@ -185,7 +191,7 @@ export function createChatSessionManager({
       ([status, msgLen]) => {
         if (status === 'ready' && msgLen !== undefined && msgLen > lastSavedLength) {
           const currentMessages = chat?.messages ?? []
-          chatPersistenceManager.save('chat-session', currentMessages, providerID.value)
+          void chatPersistenceManager.save('chat-session', currentMessages, providerID.value)
           lastSavedLength = currentMessages.length
         }
       },

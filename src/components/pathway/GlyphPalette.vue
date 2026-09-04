@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import type { PathwayGlyphType, PathwayProcessType, PathwayArcType } from '@signal-forge/scene-graph'
+import type {
+  PathwayGlyphType,
+  PathwayProcessType,
+  PathwayArcType
+} from '@signal-forge/scene-graph'
 
 import { GLYPH_PALETTE_ENTITIES, GLYPH_PALETTE_PROCESSES, GLYPH_PALETTE_ARCS } from './labels'
 import GlyphButton from './GlyphButton.vue'
 import ArcButton from './ArcButton.vue'
 
-defineProps<{
+const { activeGlyphType, activeArcType } = defineProps<{
   activeGlyphType: PathwayGlyphType | null
   activeArcType: PathwayArcType | null
 }>()
@@ -24,7 +28,9 @@ const arcs = GLYPH_PALETTE_ARCS
 <template>
   <div class="flex flex-col gap-3 p-3">
     <div>
-      <h3 class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">Entities</h3>
+      <h3 class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Entities
+      </h3>
       <div class="grid grid-cols-2 gap-1">
         <GlyphButton
           v-for="e in entities"
@@ -38,7 +44,9 @@ const arcs = GLYPH_PALETTE_ARCS
     </div>
 
     <div>
-      <h3 class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">Processes</h3>
+      <h3 class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Processes
+      </h3>
       <div class="grid grid-cols-2 gap-1">
         <GlyphButton
           v-for="p in processes"
@@ -52,7 +60,9 @@ const arcs = GLYPH_PALETTE_ARCS
     </div>
 
     <div>
-      <h3 class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">Arcs</h3>
+      <h3 class="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Arcs
+      </h3>
       <div class="grid grid-cols-2 gap-1">
         <ArcButton
           v-for="a in arcs"

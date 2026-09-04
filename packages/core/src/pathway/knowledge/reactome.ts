@@ -1,3 +1,5 @@
+import type { JsonObject } from '@signal-forge/scene-graph/primitives'
+
 const REACTOME_API_BASE = 'https://reactome.org/ContentService'
 const FETCH_TIMEOUT = 10_000
 
@@ -63,7 +65,7 @@ export async function searchPathways(
       .map(e => ({
         stableId: e.stId ?? '',
         name: stripHtml(e.name ?? ''),
-        species: Array.isArray(e.species) ? e.species.join(', ') : (e.species ?? ''),
+        species: Array.isArray(e.species) ? e.species.join(', ') : '',
         dbId: e.dbId ?? 0
       }))
   } catch {
@@ -73,13 +75,13 @@ export async function searchPathways(
 
 export async function getPathwayDetails(
   stableId: string
-): Promise<Record<string, unknown> | null> {
+): Promise<JsonObject | null> {
   const url = `${REACTOME_API_BASE}/data/detail/${stableId}`
   const response = await safeFetch(url)
   if (!response?.ok) return null
 
   try {
-    return await response.json() as Promise<Record<string, unknown>>
+    return (await response.json()) as JsonObject
   } catch {
     return null
   }
@@ -93,7 +95,8 @@ export async function getPathwayParticipants(
   if (!response?.ok) return []
 
   try {
-    return await response.json() as Promise<ReactomeParticipant[]>
+    const data = await response.json() as ReactomeParticipant[]
+    return data
   } catch {
     return []
   }
@@ -117,7 +120,7 @@ export async function findPathwaysByGene(
     }>
     return data.map(r => ({
       stableId: r.stId ?? '',
-      name: r.displayName ?? (Array.isArray(r.name) ? r.name.join(', ') : (r.name ?? '')),
+      name: r.displayName ?? (Array.isArray(r.name) ? r.name.join(', ') : ''),
       species: r.speciesName ?? '',
       dbId: r.dbId ?? 0
     }))

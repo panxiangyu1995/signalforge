@@ -4,17 +4,53 @@ import type { SceneNode, PathwayNodeData } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
-import { SBGN_STYLE, REALISTIC_STYLE } from './constants'
-import { buildRoundedRectPath } from './utils'
+import { SBGN_STYLE, REALISTIC_STYLE, type PathwayStyle } from './constants'
+import type { CompartmentType } from './render'
+import { buildRoundedRectPath, hexToCKColor } from './utils'
 
 const GLYPH_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize
 const COMPARTMENT_LABEL_FONT_SIZE = SBGN_STYLE.nodeFontSize + 2
+
+interface SemanticBadgeStyle {
+  readonly bg: string
+  readonly border: string
+}
+
+const SEMANTIC_BADGES: readonly (SemanticBadgeStyle & { tokens: readonly string[] })[] = [
+  {
+    tokens: ['p', 'phospho', 'phosphorylated', 'phosphorylation'],
+    bg: '#E8593C',
+    border: '#B03A26'
+  },
+  {
+    tokens: ['ub', 'ubiquitin', 'ubiquitinated', 'ubiquitination'],
+    bg: '#8E44AD',
+    border: '#6C3483'
+  },
+  { tokens: ['ac', 'acetyl', 'acetylated', 'acetylation'], bg: '#27AE60', border: '#1E8449' },
+  { tokens: ['me', 'methyl', 'methylated', 'methylation'], bg: '#16A085', border: '#0E6655' }
+]
+
+function semanticBadgeStyle(
+  variable: string,
+  value: string | undefined
+): SemanticBadgeStyle | null {
+  const tokens = `${variable} ${value ?? ''}`
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+  if (tokens.length === 0) return null
+  for (const badge of SEMANTIC_BADGES) {
+    if (badge.tokens.some((t) => tokens.includes(t))) return badge
+  }
+  return null
+}
 
 export function paintPathwayLabel(
   ck: CanvasKit,
   canvas: Canvas,
   node: SceneNode,
-  data: PathwayNodeData,
+  _data: PathwayNodeData,
   r: SkiaRenderer
 ): void {
   if (!node.name) return
@@ -50,7 +86,8 @@ export function paintCompartmentLabel(
   ck: CanvasKit,
   canvas: Canvas,
   node: SceneNode,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  compType: CompartmentType
 ): void {
   if (!node.name) return
   const font = r.sectionTitleFont
@@ -63,10 +100,15 @@ export function paintCompartmentLabel(
   const displayText = ellipsizeText(font, node.name, maxW)
   if (!displayText) return
 
-  const textX = padding
+  // Realistic mitochondria paint a deep-red organelle body: the fixed
+  // top-left anchor starts outside the oval edge and dark text is unreadable
+  // on it, so center a white label just inside the top of the body instead.
+  const onDarkBody = r.pathwayStyle === 'realistic' && compType === 'mitochondria'
+
+  const textX = onDarkBody ? (node.width - measureTextWidth(font, displayText)) / 2 : padding
   const textY = padding * 0.5 + COMPARTMENT_LABEL_FONT_SIZE * 0.85
 
-  r.auxFill.setColor(ck.Color4f(0.2, 0.2, 0.2, 1))
+  r.auxFill.setColor(onDarkBody ? ck.Color4f(1, 1, 1, 1) : ck.Color4f(0.2, 0.2, 0.2, 1))
   canvas.drawText(displayText, textX, textY, r.auxFill, font)
 }
 
@@ -99,25 +141,37 @@ export function paintStateVariables(
 
   totalW += (data.stateVariables.length - 1) * badgeGap
 
-  let x = (node.width - totalW) / 2
-  const y = -badgeH - badgeOffsetY
+  // Anchor badges at the top-right corner, straddling the glyph's top edge.
+  let x = node.width - totalW - 2
+  const y = -badgeH / 2 - badgeOffsetY
 
   for (let i = 0; i < data.stateVariables.length; i++) {
     const sv = data.stateVariables[i]
     const label = sv.value ? `${sv.variable}@${sv.value}` : sv.variable
     const w = widths[i]
     const cr = Math.min(w / 2, badgeH / 2)
+    const semantic = semanticBadgeStyle(sv.variable, sv.value)
 
     const path = buildRoundedRectPath(ck, w, badgeH, cr)
     try {
-      r.auxFill.setColor(ck.Color4f(1, 1, 1, 1))
       r.auxFill.setStyle(ck.PaintStyle.Fill)
-      canvas.drawPath(path, r.auxFill)
+      canvas.save()
+      canvas.translate(x, y)
+      if (semantic) {
+        r.auxFill.setColor(hexToCKColor(ck, semantic.bg))
+        canvas.drawPath(path, r.auxFill)
 
-      r.auxStroke.setColor(ck.Color4f(0x55 / 255, 0x55 / 255, 0x55 / 255, 1))
+        r.auxStroke.setColor(hexToCKColor(ck, semantic.border))
+      } else {
+        r.auxFill.setColor(ck.Color4f(1, 1, 1, 1))
+        canvas.drawPath(path, r.auxFill)
+
+        r.auxStroke.setColor(ck.Color4f(0x55 / 255, 0x55 / 255, 0x55 / 255, 1))
+      }
       r.auxStroke.setStyle(ck.PaintStyle.Stroke)
       r.auxStroke.setStrokeWidth(SBGN_STYLE.infoboxBorderWidth)
       canvas.drawPath(path, r.auxStroke)
+      canvas.restore()
     } finally {
       path.delete()
     }
@@ -127,7 +181,11 @@ export function paintStateVariables(
     const textX = x + (w - textW) / 2
     const textY = y + badgeH / 2 + SBGN_STYLE.infoboxFontSize * 0.35
 
-    r.auxFill.setColor(ck.Color4f(0, 0, 0, 1))
+    if (semantic) {
+      r.auxFill.setColor(ck.Color4f(1, 1, 1, 1))
+    } else {
+      r.auxFill.setColor(ck.Color4f(0, 0, 0, 1))
+    }
     canvas.drawText(label, textX, textY, r.auxFill, font)
 
     x += w + badgeGap
@@ -150,7 +208,7 @@ export function paintCloneMarker(
 
   canvas.save()
 
-  const clipPath = buildGlyphClipPath(ck, node, data)
+  const clipPath = buildGlyphClipPath(ck, node, data, r.pathwayStyle)
   if (clipPath) {
     try {
       canvas.clipPath(clipPath, ck.ClipOp.Intersect, true)
@@ -160,9 +218,7 @@ export function paintCloneMarker(
   }
 
   r.auxFill.setStyle(ck.PaintStyle.Fill)
-  r.auxFill.setColor(ck.Color4f(
-    0x83 / 255, 0x83 / 255, 0x83 / 255, 1
-  ))
+  r.auxFill.setColor(ck.Color4f(0x83 / 255, 0x83 / 255, 0x83 / 255, 1))
   canvas.drawRect(ck.LTRBRect(0, bandY, w, h), r.auxFill)
 
   canvas.restore()
@@ -171,16 +227,18 @@ export function paintCloneMarker(
 function buildGlyphClipPath(
   ck: CanvasKit,
   node: SceneNode,
-  data: PathwayNodeData
+  data: PathwayNodeData,
+  style: PathwayStyle
 ): Path | null {
   const w = node.width
   const h = node.height
   const glyphType = data.glyphType
 
   if (glyphType === 'macromolecule' || glyphType === 'simple_chemical') {
-    const cr = glyphType === 'simple_chemical'
-      ? Math.min(w / 2, h / 2)
-      : w * SBGN_STYLE.macromoleculeCornerRadius
+    const cr =
+      glyphType === 'simple_chemical' || style === 'realistic'
+        ? Math.min(w / 2, h / 2)
+        : w * SBGN_STYLE.macromoleculeCornerRadius
     return buildRoundedRectPath(ck, w, h, cr)
   }
 
@@ -240,7 +298,7 @@ export function paintUnitOfInformation(
   const badgeGap = 2
   const badgeOffsetY = 2
   const minBadgeW = 28
-  const svBadgeH = (data.stateVariables && data.stateVariables.length > 0) ? badgeH + badgeOffsetY : 0
+  const svTop = data.stateVariables && data.stateVariables.length > 0 ? -(badgeH / 2 + badgeOffsetY) : 0
 
   const widths: number[] = []
   let totalW = 0
@@ -254,8 +312,8 @@ export function paintUnitOfInformation(
 
   totalW += (data.unitOfInformation.length - 1) * badgeGap
 
-  let x = (node.width - totalW) / 2
-  const y = -badgeH - badgeOffsetY - svBadgeH
+  let x = node.width - totalW - 2
+  const y = svTop - badgeGap - badgeH
 
   for (let i = 0; i < data.unitOfInformation.length; i++) {
     const ui = data.unitOfInformation[i]
@@ -267,12 +325,15 @@ export function paintUnitOfInformation(
     try {
       r.auxFill.setColor(ck.Color4f(1, 1, 1, 1))
       r.auxFill.setStyle(ck.PaintStyle.Fill)
+      canvas.save()
+      canvas.translate(x, y)
       canvas.drawPath(path, r.auxFill)
 
       r.auxStroke.setColor(ck.Color4f(0x55 / 255, 0x55 / 255, 0x55 / 255, 1))
       r.auxStroke.setStyle(ck.PaintStyle.Stroke)
       r.auxStroke.setStrokeWidth(SBGN_STYLE.infoboxBorderWidth)
       canvas.drawPath(path, r.auxStroke)
+      canvas.restore()
     } finally {
       path.delete()
     }

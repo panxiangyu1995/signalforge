@@ -1,8 +1,23 @@
-import { updatePathwayData, type PathwayGlyphType, type PathwayArcType } from '@signal-forge/scene-graph'
+import {
+  updatePathwayData,
+  type NodeType,
+  type PathwayGlyphType,
+  type PathwayArcType
+} from '@signal-forge/scene-graph'
 
-import type { EditorContext } from '../types'
+import type { EditorContext } from '#core/editor/types'
 
-export function createPathwayGlyphActions(ctx: EditorContext, createShape: (type: import('@signal-forge/scene-graph').NodeType, x: number, y: number, w: number, h: number, parentId?: string) => string) {
+export function createPathwayGlyphActions(
+  ctx: EditorContext,
+  createShape: (
+    type: NodeType,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    parentId?: string
+  ) => string
+) {
   let activeGlyphType: PathwayGlyphType = 'macromolecule'
 
   function setActiveGlyphType(type: PathwayGlyphType): void {
@@ -32,7 +47,7 @@ export function createPathwayGlyphActions(ctx: EditorContext, createShape: (type
   return {
     setActiveGlyphType,
     getActiveGlyphType,
-    createPathwayGlyphNode,
+    createPathwayGlyphNode
   }
 }
 
@@ -53,7 +68,7 @@ export function createPathwayArcActions(ctx: EditorContext) {
     targetId: string
   ): string {
     const node = ctx.graph.createNode('PATHWAY_ARC', ctx.state.currentPageId, {
-      name: 'Arc',
+      name: 'Arc'
     })
     updatePathwayData(node, { arcType, sourceId, targetId })
     return node.id
@@ -62,6 +77,6 @@ export function createPathwayArcActions(ctx: EditorContext) {
   return {
     setActiveArcType,
     getActiveArcType,
-    createPathwayArcNode,
+    createPathwayArcNode
   }
 }

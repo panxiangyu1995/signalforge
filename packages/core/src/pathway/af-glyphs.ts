@@ -1,17 +1,13 @@
 import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 
-import type { SceneNode } from '@signal-forge/scene-graph'
-import type { PathwayNodeData } from '@signal-forge/scene-graph'
+import type { PathwayNodeData, SceneNode } from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
 import { SBGN_STYLE, type PathwayStyle } from './constants'
 import { hexToCKColor } from './utils'
 
-export type AFLanguageArcType =
-  | 'positive_influence'
-  | 'negative_influence'
-  | 'unknown_influence'
+export type AFLanguageArcType = 'positive_influence' | 'negative_influence' | 'unknown_influence'
 
 export function paintAFMacromolecule(
   ck: CanvasKit,

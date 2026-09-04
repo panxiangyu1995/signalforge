@@ -175,5 +175,22 @@
   "blendModeHue": "Teinte",
   "blendModeSaturation": "Saturation",
   "blendModeColor": "Couleur",
-  "blendModeLuminosity": "Luminosité"
+  "blendModeLuminosity": "Luminosité",
+  "pathway": "Voie",
+  "glyphType": "Type de glyphe",
+  "processType": "Type de processus",
+  "arcType": "Type d'arc",
+  "stateVariable": "Variable d'état",
+  "unitOfInformation": "Unité d'information",
+  "compartment": "Compartiment",
+  "cloneMarker": "Marqueur de clone",
+  "variable": "Variable",
+  "value": "Valeur",
+  "addStateVariable": "Ajouter une variable d'état",
+  "addUnitOfInformation": "Ajouter une unité d'information",
+  "removeStateVariable": "Supprimer la variable d'état",
+  "removeUnitOfInformation": "Supprimer l'unité d'information",
+  "source": "Source",
+  "target": "Cible",
+  "inspector": "Inspecteur"
 }

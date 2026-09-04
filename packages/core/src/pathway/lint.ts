@@ -1,5 +1,9 @@
-import type { SceneGraph, SceneNode } from '@signal-forge/scene-graph'
-import { getPathwayData, type PathwayArcType } from '@signal-forge/scene-graph'
+import {
+  getPathwayData,
+  type PathwayArcType,
+  type SceneGraph,
+  type SceneNode
+} from '@signal-forge/scene-graph'
 
 export interface PathwayLintIssue {
   rule: string
@@ -8,19 +12,44 @@ export interface PathwayLintIssue {
   message: string
 }
 
+const REGULATORY_ARC_TYPES = new Set<PathwayArcType>([
+  'modulation',
+  'stimulation',
+  'catalysis',
+  'inhibition',
+  'necessary_stimulation',
+  'trigger'
+])
+
 export function lintPathway(graph: SceneGraph, pageId: string): PathwayLintIssue[] {
   const issues: PathwayLintIssue[] = []
   const page = graph.getNode(pageId)
   if (!page) return issues
 
   const allNodes = collectPathwayNodes(graph, pageId)
-  const arcNodes = allNodes.filter(n => n.type === 'PATHWAY_ARC')
-  const entityNodes = allNodes.filter(n => n.type === 'PATHWAY_GLYPH')
-  const processNodes = allNodes.filter(n => n.type === 'PATHWAY_PROCESS')
+  const arcNodes = allNodes.filter((n) => n.type === 'PATHWAY_ARC')
+  const entityNodes = allNodes.filter((n) => n.type === 'PATHWAY_GLYPH')
+  const processNodes = allNodes.filter((n) => n.type === 'PATHWAY_PROCESS')
 
+  lintArcsBetweenEntities(graph, arcNodes, issues)
+  lintMissingCompartments(graph, entityNodes, issues)
+
+  const processArcCounts = collectProcessArcCounts(graph, arcNodes)
+  lintOrphanProcesses(processArcCounts, processNodes, issues)
+
+  lintRegulatoryArcs(graph, arcNodes, issues)
+
+  return issues
+}
+
+function lintArcsBetweenEntities(
+  graph: SceneGraph,
+  arcNodes: SceneNode[],
+  issues: PathwayLintIssue[]
+): void {
   for (const arc of arcNodes) {
     const data = getPathwayData(arc)
-    if (!data?.sourceId || !data?.targetId) continue
+    if (!data?.sourceId || !data.targetId) continue
 
     const source = graph.getNode(data.sourceId)
     const target = graph.getNode(data.targetId)
@@ -34,11 +63,14 @@ export function lintPathway(graph: SceneGraph, pageId: string): PathwayLintIssue
       })
     }
   }
+}
 
+function lintMissingCompartments(
+  graph: SceneGraph,
+  entityNodes: SceneNode[],
+  issues: PathwayLintIssue[]
+): void {
   for (const entity of entityNodes) {
-    const isInsideCompartment = entity.parentId
-      ? graph.getNode(entity.parentId)?.type === 'COMPARTMENT'
-      : false
     const parentType = entity.parentId ? graph.getNode(entity.parentId)?.type : null
     const isOnPage = parentType === 'CANVAS'
 
@@ -51,11 +83,16 @@ export function lintPathway(graph: SceneGraph, pageId: string): PathwayLintIssue
       })
     }
   }
+}
 
+function collectProcessArcCounts(
+  graph: SceneGraph,
+  arcNodes: SceneNode[]
+): Map<string, { consumption: number; production: number }> {
   const processArcCounts = new Map<string, { consumption: number; production: number }>()
   for (const arc of arcNodes) {
     const data = getPathwayData(arc)
-    if (!data?.targetId || !data?.arcType) continue
+    if (!data?.targetId || !data.arcType) continue
 
     const target = graph.getNode(data.targetId)
     if (target?.type !== 'PATHWAY_PROCESS') continue
@@ -65,7 +102,14 @@ export function lintPathway(graph: SceneGraph, pageId: string): PathwayLintIssue
     if (data.arcType === 'production') counts.production++
     processArcCounts.set(target.id, counts)
   }
+  return processArcCounts
+}
 
+function lintOrphanProcesses(
+  processArcCounts: Map<string, { consumption: number; production: number }>,
+  processNodes: SceneNode[],
+  issues: PathwayLintIssue[]
+): void {
   for (const process of processNodes) {
     const counts = processArcCounts.get(process.id)
     if (!counts || counts.consumption === 0 || counts.production === 0) {
@@ -77,16 +121,21 @@ export function lintPathway(graph: SceneGraph, pageId: string): PathwayLintIssue
       })
     }
   }
+}
 
+function lintRegulatoryArcs(
+  graph: SceneGraph,
+  arcNodes: SceneNode[],
+  issues: PathwayLintIssue[]
+): void {
   for (const arc of arcNodes) {
     const data = getPathwayData(arc)
-    if (!data?.arcType || !data?.sourceId || !data?.targetId) continue
+    if (!data?.arcType || !data.sourceId || !data.targetId) continue
 
     const source = graph.getNode(data.sourceId)
     const target = graph.getNode(data.targetId)
 
-    const regulatoryArcs: PathwayArcType[] = ['modulation', 'stimulation', 'catalysis', 'inhibition', 'necessary_stimulation', 'trigger']
-    if (regulatoryArcs.includes(data.arcType)) {
+    if (REGULATORY_ARC_TYPES.has(data.arcType)) {
       if (source?.type !== 'PATHWAY_GLYPH' || target?.type !== 'PATHWAY_PROCESS') {
         issues.push({
           rule: 'invalid-arc-type',
@@ -97,8 +146,6 @@ export function lintPathway(graph: SceneGraph, pageId: string): PathwayLintIssue
       }
     }
   }
-
-  return issues
 }
 
 function collectPathwayNodes(graph: SceneGraph, parentId: string): SceneNode[] {
@@ -113,7 +160,11 @@ function collectPathwayNodes(graph: SceneGraph, parentId: string): SceneNode[] {
     const node = graph.getNode(id)
     if (!node) continue
 
-    if (node.type === 'PATHWAY_GLYPH' || node.type === 'PATHWAY_PROCESS' || node.type === 'PATHWAY_ARC') {
+    if (
+      node.type === 'PATHWAY_GLYPH' ||
+      node.type === 'PATHWAY_PROCESS' ||
+      node.type === 'PATHWAY_ARC'
+    ) {
       result.push(node)
     }
 

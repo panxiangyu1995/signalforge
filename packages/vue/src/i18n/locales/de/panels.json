@@ -175,5 +175,22 @@
   "blendModeHue": "Farbton",
   "blendModeSaturation": "Sättigung",
   "blendModeColor": "Farbe",
-  "blendModeLuminosity": "Luminanz"
+  "blendModeLuminosity": "Luminanz",
+  "pathway": "Pfad",
+  "glyphType": "Glyphentyp",
+  "processType": "Prozesstyp",
+  "arcType": "Bogentyp",
+  "stateVariable": "Zustandsvariable",
+  "unitOfInformation": "Informationseinheit",
+  "compartment": "Kompartiment",
+  "cloneMarker": "Klon-Markierung",
+  "variable": "Variable",
+  "value": "Wert",
+  "addStateVariable": "Zustandsvariable hinzufügen",
+  "addUnitOfInformation": "Informationseinheit hinzufügen",
+  "removeStateVariable": "Zustandsvariable entfernen",
+  "removeUnitOfInformation": "Informationseinheit entfernen",
+  "source": "Quelle",
+  "target": "Ziel",
+  "inspector": "Inspektor"
 }

@@ -26,22 +26,56 @@ function collectNodeBounds(graph: SceneGraph, pageId: string): NodeBounds[] {
 
     if (node.type === 'PATHWAY_GLYPH' || node.type === 'PATHWAY_PROCESS') {
       const abs = graph.getAbsolutePosition(id)
-      if (abs) {
-        bounds.push({
-          id,
-          x: abs.x,
-          y: abs.y,
-          width: node.width,
-          height: node.height,
-          parentId: node.parentId,
-        })
-      }
+      bounds.push({
+        id,
+        x: abs.x,
+        y: abs.y,
+        width: node.width,
+        height: node.height,
+        parentId: node.parentId
+      })
     }
 
     stack.push(...node.childIds)
   }
 
   return bounds
+}
+
+interface Separation {
+  sepX: number
+  sepY: number
+}
+
+/** Effective bounds including the accumulated separation offset. */
+function effectiveBounds(b: NodeBounds, offsets: Map<string, Vector>): NodeBounds {
+  const off = offsets.get(b.id)
+  if (!off || (off.x === 0 && off.y === 0)) return b
+  return { ...b, x: b.x + off.x, y: b.y + off.y }
+}
+
+function computeSeparation(
+  a: Pick<NodeBounds, 'x' | 'y' | 'width' | 'height'>,
+  b: Pick<NodeBounds, 'x' | 'y' | 'width' | 'height'>,
+  minGap: number
+): Separation | null {
+  const overlap =
+    a.x < b.x + b.width + minGap &&
+    a.x + a.width + minGap > b.x &&
+    a.y < b.y + b.height + minGap &&
+    a.y + a.height + minGap > b.y
+  if (!overlap) return null
+
+  const overlapX = Math.min(a.x + a.width + minGap - b.x, b.x + b.width + minGap - a.x)
+  const overlapY = Math.min(a.y + a.height + minGap - b.y, b.y + b.height + minGap - a.y)
+  if (overlapX <= 0 || overlapY <= 0) return null
+
+  if (overlapX < overlapY) {
+    const sepX = ((a.x + a.width / 2 < b.x + b.width / 2 ? -1 : 1) * overlapX) / 2
+    return { sepX, sepY: 0 }
+  }
+  const sepY = ((a.y + a.height / 2 < b.y + b.height / 2 ? -1 : 1) * overlapY) / 2
+  return { sepX: 0, sepY }
 }
 
 function detectAndResolveOverlaps(
@@ -53,54 +87,27 @@ function detectAndResolveOverlaps(
 
   for (let i = 0; i < bounds.length; i++) {
     for (let j = i + 1; j < bounds.length; j++) {
+      // Only separate siblings — pushing nodes across compartment boundaries
+      // breaks containment and invalidates compartment bounds.
+      if (bounds[i].parentId !== bounds[j].parentId) continue
+      const a = effectiveBounds(bounds[i], offsets)
+      const b = effectiveBounds(bounds[j], offsets)
+      const sep = computeSeparation(a, b, minGap)
+      if (!sep) continue
+
       const offA = offsets.get(bounds[i].id)
       const offB = offsets.get(bounds[j].id)
-      const ax = bounds[i].x + (offA?.x ?? 0)
-      const ay = bounds[i].y + (offA?.y ?? 0)
-      const bx = bounds[j].x + (offB?.x ?? 0)
-      const by = bounds[j].y + (offB?.y ?? 0)
-
-      const aW = bounds[i].width
-      const aH = bounds[i].height
-      const bW = bounds[j].width
-      const bH = bounds[j].height
-
-      const overlap =
-        ax < bx + bW + minGap &&
-        ax + aW + minGap > bx &&
-        ay < by + bH + minGap &&
-        ay + aH + minGap > by
-
-      if (overlap) {
-        const overlapX = Math.min(ax + aW + minGap - bx, bx + bW + minGap - ax)
-        const overlapY = Math.min(ay + aH + minGap - by, by + bH + minGap - ay)
-
-        if (overlapX > 0 && overlapY > 0) {
-          let sepX = 0
-          let sepY = 0
-          if (overlapX < overlapY) {
-            sepX = ((ax + aW / 2) < (bx + bW / 2) ? -1 : 1) * overlapX / 2
-          } else {
-            sepY = ((ay + aH / 2) < (by + bH / 2) ? -1 : 1) * overlapY / 2
-          }
-          if (offA && offB) {
-            offsets.set(bounds[i].id, { x: offA.x + sepX, y: offA.y + sepY })
-            offsets.set(bounds[j].id, { x: offB.x - sepX, y: offB.y - sepY })
-          }
-        }
-        anyOverlap = true
-      }
+      if (!offA || !offB) continue
+      offsets.set(bounds[i].id, { x: offA.x + sep.sepX, y: offA.y + sep.sepY })
+      offsets.set(bounds[j].id, { x: offB.x - sep.sepX, y: offB.y - sep.sepY })
+      anyOverlap = true
     }
   }
 
   return anyOverlap
 }
 
-export function resolveCollisions(
-  graph: SceneGraph,
-  pageId: string,
-  minGap: number
-): number {
+export function resolveCollisions(graph: SceneGraph, pageId: string, minGap: number): number {
   const bounds = collectNodeBounds(graph, pageId)
   if (bounds.length <= 1) return 0
 
@@ -123,11 +130,9 @@ export function resolveCollisions(
       const parent = graph.getNode(b.parentId)
       if (parent) {
         const parentAbs = graph.getAbsolutePosition(b.parentId)
-        if (parentAbs) {
-          const node = graph.getNode(b.id)
-          if (node) {
-            graph.updateNode(b.id, { x: b.x + off.x - parentAbs.x, y: b.y + off.y - parentAbs.y })
-          }
+        const node = graph.getNode(b.id)
+        if (node) {
+          graph.updateNode(b.id, { x: b.x + off.x - parentAbs.x, y: b.y + off.y - parentAbs.y })
         }
         continue
       }

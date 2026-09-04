@@ -7,7 +7,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import NumberField from '@/components/inputs/NumberField.vue'
 import PanelSection from '@/components/ui/panel/PanelSection.vue'
 
-const props = defineProps<{
+const { node } = defineProps<{
   node: SceneNode
   data: PathwayNodeData
 }>()
@@ -16,15 +16,15 @@ const store = useEditorStore()
 const { panels } = useI18n()
 
 function updateLabel(value: string) {
-  store.renameNode(props.node.id, value)
+  store.renameNode(node.id, value)
 }
 
 function updatePosition(axis: 'x' | 'y', value: number) {
-  store.updateNodeWithUndo(props.node.id, { [axis]: value }, `Set ${axis}`)
+  store.updateNodeWithUndo(node.id, { [axis]: value }, `Set ${axis}`)
 }
 
 function updateSize(dim: 'width' | 'height', value: number) {
-  store.updateNodeWithUndo(props.node.id, { [dim]: value }, `Set ${dim}`)
+  store.updateNodeWithUndo(node.id, { [dim]: value }, `Set ${dim}`)
 }
 </script>
 

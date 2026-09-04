@@ -175,5 +175,22 @@
   "blendModeHue": "Barwa",
   "blendModeSaturation": "Nasycenie",
   "blendModeColor": "Kolor",
-  "blendModeLuminosity": "Jasność"
+  "blendModeLuminosity": "Jasność",
+  "pathway": "Szlak",
+  "glyphType": "Typ glifu",
+  "processType": "Typ procesu",
+  "arcType": "Typ łuku",
+  "stateVariable": "Zmienna stanu",
+  "unitOfInformation": "Jednostka informacji",
+  "compartment": "Przedział",
+  "cloneMarker": "Znak klonowania",
+  "variable": "Zmienna",
+  "value": "Wartość",
+  "addStateVariable": "Dodaj zmienną stanu",
+  "addUnitOfInformation": "Dodaj jednostkę informacji",
+  "removeStateVariable": "Usuń zmienną stanu",
+  "removeUnitOfInformation": "Usuń jednostkę informacji",
+  "source": "Źródło",
+  "target": "Cel",
+  "inspector": "Inspektor"
 }

@@ -3,18 +3,18 @@ import { tool } from 'ai'
 import * as v from 'valibot'
 
 import { computeAllLayouts } from '@signal-forge/core/layout'
+import { resolveCollisions } from '@signal-forge/core/pathway/layout/collision'
 import { hierarchicalLayout } from '@signal-forge/core/pathway/layout/hierarchical'
 import { computeOrthogonalBendPoints } from '@signal-forge/core/pathway/layout/orthogonal'
-import { resolveCollisions } from '@signal-forge/core/pathway/layout/collision'
 import { BIOPATH_CORE_TOOLS, toolsToAI } from '@signal-forge/core/tools'
 import type { StepBudget, ToolLogEntry } from '@signal-forge/core/tools'
 import type { SceneNode } from '@signal-forge/scene-graph'
 
+import { aiLog } from '@/app/ai/dev-log'
 import { makeFigmaFromStore } from '@/app/automation/bridge/figma-factory'
 import { getActiveEditorStore } from '@/app/editor/active-store'
 import type { EditorStore } from '@/app/editor/active-store'
 import { ensureGraphFonts } from '@/app/editor/fonts'
-import { aiLog } from '@/app/ai/dev-log'
 
 export const MAX_AGENT_STEPS = 100
 
@@ -139,8 +139,8 @@ export function createAITools(store: EditorStore) {
 
           if (def.name === 'end_pathway') {
             hierarchicalLayout(store.graph, pageId, { direction: 'top-bottom', spacing: 60 })
-            computeOrthogonalBendPoints(store.graph, pageId, 'top-bottom')
             resolveCollisions(store.graph, pageId, 20)
+            computeOrthogonalBendPoints(store.graph, pageId, 'top-bottom')
             aiLog.perf('afterExec', `${def.name} pathwayLayout+collision`, Date.now() - t0)
           }
 
@@ -184,7 +184,7 @@ export function createAITools(store: EditorStore) {
         current: runState.currentSteps,
         max: MAX_AGENT_STEPS
       }),
-      devLog: aiLog,
+      devLog: aiLog
     },
     { v, valibotSchema, tool }
   )

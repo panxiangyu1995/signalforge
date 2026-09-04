@@ -14,8 +14,7 @@ function glyphFillColor(
   style: PathwayStyle
 ): Float32Array {
   if (style === 'publication' && glyphType) {
-    const fill = PUBLICATION_STYLE.entityFills[glyphType]
-    if (fill) return hexToCKColor(ck, fill)
+    return hexToCKColor(ck, PUBLICATION_STYLE.entityFills[glyphType])
   }
   return hexToCKColor(ck, SBGN_STYLE.nodeBackgroundColor)
 }
@@ -28,7 +27,6 @@ function glyphGradientShader(
 ): Shader | null {
   if (style !== 'publication' || !glyphType) return null
   const grad = PUBLICATION_STYLE.entityGradients[glyphType]
-  if (!grad) return null
   return ck.Shader.MakeLinearGradient(
     [0, 0], [0, nodeHeight],
     [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
@@ -39,8 +37,7 @@ function glyphGradientShader(
 
 function glyphBorder(ck: CanvasKit, glyphType: PathwayGlyphType | undefined, style: PathwayStyle): Float32Array {
   if (style === 'publication' && glyphType) {
-    const border = PUBLICATION_STYLE.entityBorders[glyphType]
-    if (border) return hexToCKColor(ck, border)
+    return hexToCKColor(ck, PUBLICATION_STYLE.entityBorders[glyphType])
   }
   return hexToCKColor(ck, SBGN_STYLE.nodeBorderColor)
 }
@@ -385,10 +382,5 @@ export function paintPathwayGlyph(
     return
   }
   const painter = GLYPH_PAINTERS[glyphType]
-  if (painter) {
-    painter(ck, canvas, node, data, style, r)
-  } else {
-    paintUnspecifiedEntity(ck, canvas, node, data, style, r)
-    console.warn(`[pathway] Unknown glyph type "${glyphType}", rendering as unspecified_entity`)
-  }
+  painter(ck, canvas, node, data, style, r)
 }

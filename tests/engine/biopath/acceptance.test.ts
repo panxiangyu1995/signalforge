@@ -7,33 +7,52 @@
  */
 import { describe, it, expect } from 'bun:test'
 
-import { SceneGraph } from '@signal-forge/scene-graph'
-import {
-  getPathwayData,
-  setPathwayData,
-  updatePathwayData,
-  ANNOTATION_PLUGIN_KEY,
-  PATHWAY_PLUGIN_ID,
-  type PathwayNodeData,
-  type PathwayAnnotation,
-  type PathwayAnnotationType,
-} from '@signal-forge/scene-graph'
-
 import { FigmaAPI } from '@signal-forge/core/figma-api'
 import {
   BIOPATH_CORE_TOOLS,
   BIOPATH_EXTENDED_TOOLS,
   BIOPATH_TOOLS,
-  type ToolDef,
-  type ParamType,
+  type ToolDef
 } from '@signal-forge/core/tools'
+import {
+  ANNOTATION_PLUGIN_KEY,
+  PATHWAY_PLUGIN_ID,
+  SceneGraph,
+  getPathwayData,
+  updatePathwayData,
+  type PathwayAnnotation
+} from '@signal-forge/scene-graph'
+
+interface ToolResult {
+  id?: string
+  removed?: boolean
+  pages_created?: number
+  pages?: Array<{ page_name: string; entity_count: number }>
+  entities_in_data?: number
+  clone_marker?: boolean
+  multimer?: boolean
+  active_state?: boolean
+  valid?: boolean
+  errors?: Array<{ rule: string }>
+  error?: string
+  updated?: string[]
+}
 
 const VALID_PARAM_TYPES: ReadonlySet<string> = new Set<string>([
-  'string', 'number', 'boolean', 'color', 'string[]'
+  'string',
+  'number',
+  'boolean',
+  'color',
+  'string[]'
 ])
 
-describe('BioPath MCP Tool Refactoring — Acceptance', () => {
+function findTool(name: string): ToolDef {
+  const tool = BIOPATH_TOOLS.find((t) => t.name === name)
+  if (!tool) throw new Error(`Tool "${name}" not found in BIOPATH_TOOLS`)
+  return tool
+}
 
+describe('BioPath MCP Tool Refactoring — Acceptance', () => {
   describe('T1: BIOPATH_TOOLS registry completeness', () => {
     it('BIOPATH_TOOLS has correct tool count (core + extended, no overlap)', () => {
       expect(BIOPATH_CORE_TOOLS.length).toBe(36)
@@ -42,8 +61,8 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
     })
 
     it('BIOPATH_TOOLS = CORE + EXTENDED with no overlap', () => {
-      const coreNames = new Set(BIOPATH_CORE_TOOLS.map(t => t.name))
-      const extNames = new Set(BIOPATH_EXTENDED_TOOLS.map(t => t.name))
+      const coreNames = new Set(BIOPATH_CORE_TOOLS.map((t) => t.name))
+      const extNames = new Set(BIOPATH_EXTENDED_TOOLS.map((t) => t.name))
       for (const name of coreNames) {
         expect(extNames.has(name)).toBe(false)
       }
@@ -89,22 +108,22 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       page.appendChild(arc)
 
       expect(typeof graph.deleteNode).toBe('function')
-      expect(typeof (graph as Record<string, unknown>).removeNode).toBe('undefined')
+      expect(graph).not.toHaveProperty('removeNode')
 
-      const removeArcTool = BIOPATH_TOOLS.find(t => t.name === 'remove_arc')!
-      const result = removeArcTool.execute(api, { node_id: arc.id }) as Record<string, unknown>
+      const removeArcTool = findTool('remove_arc')
+      const result = removeArcTool.execute(api, { node_id: arc.id }) as ToolResult
       expect(result.removed).toBe(true)
       expect(graph.getNode(arc.id)).toBeUndefined()
     })
 
     it('modifyArc does not call requestRender (FigmaAPI has no such method)', () => {
-      expect(typeof (FigmaAPI.prototype as Record<string, unknown>).requestRender).toBe('undefined')
+      expect(FigmaAPI.prototype).not.toHaveProperty('requestRender')
     })
 
     it('importSbgnMl uses getPages() not rootPageIds (SceneGraph has no rootPageIds)', () => {
       const graph = new SceneGraph()
       expect(typeof graph.getPages).toBe('function')
-      expect(typeof (graph as Record<string, unknown>).rootPageIds).toBe('undefined')
+      expect(graph).not.toHaveProperty('rootPageIds')
     })
 
     it('splitPathway creates page without name arg + renames', () => {
@@ -117,20 +136,21 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('macromolecule', { name: 'EGFR' })
       comp.appendChild(entity)
 
-      const splitTool = BIOPATH_TOOLS.find(t => t.name === 'split_pathway')!
-      const result = splitTool.execute(api, { strategy: 'by_compartment' }) as Record<string, unknown>
+      const splitTool = findTool('split_pathway')
+      const result = splitTool.execute(api, { strategy: 'by_compartment' }) as ToolResult
 
       expect(result.pages_created).toBe(1)
-      const pages = result.pages as Array<{ page_name: string; entity_count: number }>
+      const pages = result.pages
+      if (!pages) throw new Error('split_pathway result missing pages')
       expect(pages[0].page_name).toBe('Cytoplasm')
       expect(pages[0].entity_count).toBe(1)
 
-      const newPage = graph.getPages().find(p => p.name === 'Cytoplasm')
+      const newPage = graph.getPages().find((p) => p.name === 'Cytoplasm')
       expect(newPage).toBeDefined()
     })
 
     it('overlayExpressionData accepts string JSON (not object)', () => {
-      const overlayTool = BIOPATH_TOOLS.find(t => t.name === 'overlay_expression_data')!
+      const overlayTool = findTool('overlay_expression_data')
       const dataParam = overlayTool.params.data_json
       expect(dataParam.type).toBe('string')
 
@@ -138,12 +158,12 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const api = new FigmaAPI(graph)
       const result = overlayTool.execute(api, {
         data_json: '{"EGFR": 0.5}'
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(result.entities_in_data).toBe(1)
 
       const badResult = overlayTool.execute(api, {
         data_json: 'not-json'
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(badResult.error).toBeDefined()
     })
   })
@@ -180,12 +200,13 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('macromolecule', { name: 'STAT3' })
       page.appendChild(entity)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'set_clone_marker')!
-      const result = tool.execute(api, { node_id: entity.id, enabled: true }) as Record<string, unknown>
+      const tool = findTool('set_clone_marker')
+      const result = tool.execute(api, { node_id: entity.id, enabled: true }) as ToolResult
       expect(result.clone_marker).toBe(true)
 
       const rawNode = graph.getNode(entity.id)
-      expect(getPathwayData(rawNode!)?.cloneMarker).toBe(true)
+      if (!rawNode) throw new Error('entity node not found')
+      expect(getPathwayData(rawNode)?.cloneMarker).toBe(true)
     })
 
     it('addMultimer tool writes multimer field', () => {
@@ -195,12 +216,13 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('simple_chemical', { name: 'ATP' })
       page.appendChild(entity)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'add_multimer')!
-      const result = tool.execute(api, { node_id: entity.id, enabled: true }) as Record<string, unknown>
+      const tool = findTool('add_multimer')
+      const result = tool.execute(api, { node_id: entity.id, enabled: true }) as ToolResult
       expect(result.multimer).toBe(true)
 
       const rawNode = graph.getNode(entity.id)
-      expect(getPathwayData(rawNode!)?.multimer).toBe(true)
+      if (!rawNode) throw new Error('entity node not found')
+      expect(getPathwayData(rawNode)?.multimer).toBe(true)
     })
 
     it('setActiveState tool writes activeState field', () => {
@@ -210,12 +232,13 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('macromolecule', { name: 'JAK2' })
       page.appendChild(entity)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'set_active_state')!
-      const result = tool.execute(api, { node_id: entity.id, enabled: true }) as Record<string, unknown>
+      const tool = findTool('set_active_state')
+      const result = tool.execute(api, { node_id: entity.id, enabled: true }) as ToolResult
       expect(result.active_state).toBe(true)
 
       const rawNode = graph.getNode(entity.id)
-      expect(getPathwayData(rawNode!)?.activeState).toBe(true)
+      if (!rawNode) throw new Error('entity node not found')
+      expect(getPathwayData(rawNode)?.activeState).toBe(true)
     })
   })
 
@@ -231,17 +254,22 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
 
       const annotation: PathwayAnnotation = { type: 'doi', value: '10.1234/test' }
       const idx = node.pluginData.findIndex(
-        e => e.pluginId === PATHWAY_PLUGIN_ID && e.key === ANNOTATION_PLUGIN_KEY
+        (e) => e.pluginId === PATHWAY_PLUGIN_ID && e.key === ANNOTATION_PLUGIN_KEY
       )
-      const entry = { pluginId: PATHWAY_PLUGIN_ID, key: ANNOTATION_PLUGIN_KEY, value: JSON.stringify([annotation]) }
+      const entry = {
+        pluginId: PATHWAY_PLUGIN_ID,
+        key: ANNOTATION_PLUGIN_KEY,
+        value: JSON.stringify([annotation])
+      }
       if (idx !== -1) node.pluginData[idx] = entry
       else node.pluginData.push(entry)
 
       const stored = node.pluginData.find(
-        e => e.pluginId === PATHWAY_PLUGIN_ID && e.key === ANNOTATION_PLUGIN_KEY
+        (e) => e.pluginId === PATHWAY_PLUGIN_ID && e.key === ANNOTATION_PLUGIN_KEY
       )
       expect(stored).toBeDefined()
-      const parsed = JSON.parse(stored!.value) as PathwayAnnotation[]
+      if (!stored) throw new Error('annotation entry not stored')
+      const parsed = JSON.parse(stored.value) as PathwayAnnotation[]
       expect(parsed[0].type).toBe('doi')
       expect(parsed[0].value).toBe('10.1234/test')
     })
@@ -253,12 +281,12 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('macromolecule', { name: 'BRCA1' })
       page.appendChild(entity)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'annotate_pathway')!
+      const tool = findTool('annotate_pathway')
       const result = tool.execute(api, {
         node_id: entity.id,
         type: 'doi',
         value: '   '
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(result.error).toBeDefined()
     })
 
@@ -269,12 +297,12 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('macromolecule', { name: 'BRCA1' })
       page.appendChild(entity)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'annotate_pathway')!
+      const tool = findTool('annotate_pathway')
       const result = tool.execute(api, {
         node_id: entity.id,
         type: 'url',
         value: 'x'.repeat(2049)
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(result.error).toBeDefined()
     })
 
@@ -285,12 +313,12 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const entity = api.createPathwayGlyph('macromolecule', { name: 'BRCA1' })
       page.appendChild(entity)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'annotate_pathway')!
+      const tool = findTool('annotate_pathway')
       const result = tool.execute(api, {
         node_id: entity.id,
         type: 'invalid_type',
         value: 'test'
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(result.error).toBeDefined()
     })
   })
@@ -301,13 +329,24 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const api = new FigmaAPI(graph)
       const page = api.currentPage
 
-      const extracellular = api.createCompartment('Extracellular', { x: 0, y: 0, width: 1200, height: 200 })
+      const extracellular = api.createCompartment('Extracellular', {
+        x: 0,
+        y: 0,
+        width: 1200,
+        height: 200
+      })
       page.appendChild(extracellular)
-      const cytoplasm = api.createCompartment('Cytoplasm', { x: 0, y: 200, width: 1200, height: 500 })
+      const cytoplasm = api.createCompartment('Cytoplasm', {
+        x: 0,
+        y: 200,
+        width: 1200,
+        height: 500
+      })
       page.appendChild(cytoplasm)
 
       const rawPage = graph.getNode(page.id)
-      expect(rawPage!.childIds.length).toBe(2)
+      if (!rawPage) throw new Error('page node not found')
+      expect(rawPage.childIds.length).toBe(2)
 
       const comp1 = graph.getNode(extracellular.id)
       expect(comp1?.type).toBe('COMPARTMENT')
@@ -335,30 +374,30 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
 
   describe('T8: Tool names are unique', () => {
     it('no duplicate tool names in BIOPATH_TOOLS', () => {
-      const names = BIOPATH_TOOLS.map(t => t.name)
+      const names = BIOPATH_TOOLS.map((t) => t.name)
       const unique = new Set(names)
       expect(unique.size).toBe(names.length)
     })
 
     it('no duplicate tool names across CORE and EXTENDED', () => {
-      const coreNames = BIOPATH_CORE_TOOLS.map(t => t.name)
-      const extNames = BIOPATH_EXTENDED_TOOLS.map(t => t.name)
-      const overlap = coreNames.filter(n => extNames.includes(n))
+      const coreNames = BIOPATH_CORE_TOOLS.map((t) => t.name)
+      const extNames = new Set(BIOPATH_EXTENDED_TOOLS.map((t) => t.name))
+      const overlap = coreNames.filter((n) => extNames.has(n))
       expect(overlap.length).toBe(0)
     })
   })
 
   describe('T9: validatePathway/autoLayoutPathway/queryPathwayDb in CORE', () => {
     it('validatePathway is in BIOPATH_CORE_TOOLS', () => {
-      expect(BIOPATH_CORE_TOOLS.some(t => t.name === 'validate_pathway')).toBe(true)
+      expect(BIOPATH_CORE_TOOLS.some((t) => t.name === 'validate_pathway')).toBe(true)
     })
 
     it('autoLayoutPathway is in BIOPATH_CORE_TOOLS', () => {
-      expect(BIOPATH_CORE_TOOLS.some(t => t.name === 'auto_layout_pathway')).toBe(true)
+      expect(BIOPATH_CORE_TOOLS.some((t) => t.name === 'auto_layout_pathway')).toBe(true)
     })
 
     it('queryPathwayDb is in BIOPATH_CORE_TOOLS', () => {
-      expect(BIOPATH_CORE_TOOLS.some(t => t.name === 'query_pathway_db')).toBe(true)
+      expect(BIOPATH_CORE_TOOLS.some((t) => t.name === 'query_pathway_db')).toBe(true)
     })
   })
 
@@ -375,12 +414,13 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const arc = api.createPathwayArc('modulation', e1.id, e2.id)
       page.appendChild(arc)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'validate_pathway')!
-      const result = tool.execute(api, {}) as Record<string, unknown>
+      const tool = findTool('validate_pathway')
+      const result = tool.execute(api, {}) as ToolResult
       expect(result.valid).toBe(false)
 
-      const errors = result.errors as Array<{ rule: string }>
-      expect(errors.some(e => e.rule === 'arc-between-entities')).toBe(true)
+      const errors = result.errors
+      if (!errors) throw new Error('validate_pathway result missing errors')
+      expect(errors.some((e) => e.rule === 'arc-between-entities')).toBe(true)
     })
 
     it('returns valid=true for compliant pathway', () => {
@@ -402,8 +442,8 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const production = api.createPathwayArc('production', proc.id, e2.id)
       comp.appendChild(production)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'validate_pathway')!
-      const result = tool.execute(api, {}) as Record<string, unknown>
+      const tool = findTool('validate_pathway')
+      const result = tool.execute(api, {}) as ToolResult
       expect(result.valid).toBe(true)
       expect(result.errors).toEqual([])
     })
@@ -422,13 +462,13 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const arc = api.createPathwayArc('consumption', e1.id, proc.id)
       page.appendChild(arc)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'modify_arc')!
+      const tool = findTool('modify_arc')
       const result = tool.execute(api, {
         node_id: arc.id,
         arc_type: 'not_a_real_type'
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(result.error).toBeDefined()
-      expect((result.error as string).includes('Invalid arc_type')).toBe(true)
+      expect(result.error?.includes('Invalid arc_type')).toBe(true)
     })
 
     it('accepts valid arc_type change', () => {
@@ -443,22 +483,23 @@ describe('BioPath MCP Tool Refactoring — Acceptance', () => {
       const arc = api.createPathwayArc('consumption', e1.id, proc.id)
       page.appendChild(arc)
 
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'modify_arc')!
+      const tool = findTool('modify_arc')
       const result = tool.execute(api, {
         node_id: arc.id,
         arc_type: 'catalysis'
-      }) as Record<string, unknown>
+      }) as ToolResult
       expect(result.id).toBe(arc.id)
-      expect((result.updated as string[])).toContain('arcType')
+      expect(result.updated).toContain('arcType')
 
       const rawNode = graph.getNode(arc.id)
-      expect(getPathwayData(rawNode!)?.arcType).toBe('catalysis')
+      if (!rawNode) throw new Error('arc node not found')
+      expect(getPathwayData(rawNode)?.arcType).toBe('catalysis')
     })
   })
 
   describe('T12: export_sbgn_ml tool', () => {
     it('has no page_id param (removed per H3)', () => {
-      const tool = BIOPATH_TOOLS.find(t => t.name === 'export_sbgn_ml')!
+      const tool = findTool('export_sbgn_ml')
       expect(Object.keys(tool.params)).not.toContain('page_id')
       expect(Object.keys(tool.params).length).toBe(0)
     })

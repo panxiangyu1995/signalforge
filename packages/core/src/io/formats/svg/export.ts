@@ -98,7 +98,6 @@ function pathwayNodeToSVGElements(
     const x0 = round(w * inset)
     const x1 = round(w * (1 - inset))
     const y0 = round(h * inset)
-    const y1 = round(h * (1 - inset))
     const d = [
       `M ${round(w * 0.05)},${y0}`,
       `L ${round(w * 0.25)},0`,
@@ -110,7 +109,7 @@ function pathwayNodeToSVGElements(
       `L ${round(w * 0.25)},${h}`,
       `Q ${round(w * 0.05)},${h} ${x0},${round(h * 0.75)}`,
       `Q ${x0},${round(h * 0.5)} ${x0},${round(h * 0.25)}`,
-      'Z',
+      'Z'
     ].join(' ')
     return [svg('path', { d, ...common })]
   }

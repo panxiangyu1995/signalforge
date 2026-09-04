@@ -1,30 +1,23 @@
-import type {
-  SceneGraph,
-  SceneNode as CoreSceneNode,
-  NodeType,
-  Variable,
-  VariableCollection,
-  VariableType,
-  VariableValue
-} from '@signal-forge/scene-graph'
-import { copyFills, copyStrokes, copyEffects } from '@signal-forge/scene-graph/copy'
-import { computeBounds } from '@signal-forge/scene-graph/geometry'
-import { computeImageHash } from '@signal-forge/scene-graph/images'
-import type { Rect, Vector } from '@signal-forge/scene-graph/primitives'
 import {
-  getPathwayData,
   updatePathwayData,
+  type NodeType,
+  type PathwayArcType,
   type PathwayGlyphType,
   type PathwayProcessType,
-  type PathwayArcType
+  type SceneGraph,
+  type SceneNode as CoreSceneNode,
+  type Variable,
+  type VariableCollection,
+  type VariableType,
+  type VariableValue
 } from '@signal-forge/scene-graph'
+import { copyFills, copyStrokes, copyEffects } from '@signal-forge/scene-graph/copy'
+import { computeImageHash } from '@signal-forge/scene-graph/images'
+import type { Rect, Vector } from '@signal-forge/scene-graph/primitives'
 
 import type { SkiaRenderer } from '#core/canvas'
-import { canMakeBooleanSourceNode } from '#core/canvas/boolean'
-import { flattenNodesToVectorProps } from '#core/canvas/flatten'
 import { IS_BROWSER } from '#core/constants'
 import type { RasterExportFormat } from '#core/io/formats/raster'
-import { findNearestPort } from '#core/pathway/ports'
 
 import type {
   FigmaBooleanOperationNode,
@@ -40,6 +33,12 @@ import type {
   FigmaTextNode,
   FigmaVectorNode
 } from './node-types'
+import {
+  computeScrollZoom,
+  createBooleanOperationNode,
+  createFlattenPlaceholder,
+  flattenNodesWithRenderer
+} from './operations'
 import {
   FigmaNodeProxy,
   INTERNAL_ID,
@@ -123,9 +122,7 @@ export class FigmaAPI implements NodeProxyHost {
   resetPathwayBatch(): void {
     this._pathwayBatch = false
     this._batchDepth = 0
-    if (this.graph.eventsMuted) {
-      while (this.graph.eventsMuted) this.graph.unmuteEvents()
-    }
+    while (this.graph.eventsMuted) this.graph.unmuteEvents()
   }
 
   get pathwayBatch(): boolean {
@@ -237,48 +234,44 @@ export class FigmaAPI implements NodeProxyHost {
     return this._createNode('SECTION') as FigmaSectionNode
   }
 
-  createPathwayGlyph(glyphType: PathwayGlyphType, overrides?: Partial<CoreSceneNode>): FigmaNodeProxy {
+  createPathwayGlyph(
+    glyphType: PathwayGlyphType,
+    overrides?: Partial<CoreSceneNode>
+  ): FigmaNodeProxy {
     const node = this.graph.createNode('PATHWAY_GLYPH', this._currentPageId, overrides)
     updatePathwayData(node, { glyphType })
     return this.wrapNode(node.id)
   }
 
-  createPathwayProcess(processType: PathwayProcessType, overrides?: Partial<CoreSceneNode>): FigmaNodeProxy {
+  createPathwayProcess(
+    processType: PathwayProcessType,
+    overrides?: Partial<CoreSceneNode>
+  ): FigmaNodeProxy {
     const node = this.graph.createNode('PATHWAY_PROCESS', this._currentPageId, overrides)
     updatePathwayData(node, { processType })
     return this.wrapNode(node.id)
   }
 
-  createPathwayArc(arcType: PathwayArcType, sourceId: string, targetId: string, overrides?: Partial<CoreSceneNode>): FigmaNodeProxy {
+  createPathwayArc(
+    arcType: PathwayArcType,
+    sourceId: string,
+    targetId: string,
+    overrides?: Partial<CoreSceneNode>
+  ): FigmaNodeProxy {
     const node = this.graph.createNode('PATHWAY_ARC', this._currentPageId, overrides)
 
-    let sourcePort: { side: string; x: number; y: number } | undefined
-    let targetPort: { side: string; x: number; y: number } | undefined
-
-    const sourceNode = this.graph.getNode(sourceId)
-    const targetNode = this.graph.getNode(targetId)
-    if (sourceNode && targetNode) {
-      const sourceData = getPathwayData(sourceNode)
-      const targetData = getPathwayData(targetNode)
-      const sourceAbs = this.graph.getAbsolutePosition(sourceId)
-      const targetAbs = this.graph.getAbsolutePosition(targetId)
-
-      sourcePort = findNearestPort(sourceNode, sourceData ?? {}, {
-        x: targetAbs.x + targetNode.width / 2 - sourceAbs.x,
-        y: targetAbs.y + targetNode.height / 2 - sourceAbs.y
-      })
-      targetPort = findNearestPort(targetNode, targetData ?? {}, {
-        x: sourceAbs.x + sourceNode.width / 2 - targetAbs.x,
-        y: sourceAbs.y + sourceNode.height / 2 - targetAbs.y
-      })
-    }
-
-    updatePathwayData(node, { arcType, sourceId, targetId, sourcePort, targetPort })
+    // Arc endpoints stay derived: the renderer resolves ports from current
+    // geometry on every paint, so moving a glyph never strands a stale
+    // creation-time port snapshot in the arc data.
+    updatePathwayData(node, { arcType, sourceId, targetId })
     return this.wrapNode(node.id)
   }
 
   createCompartment(label: string, overrides?: Partial<CoreSceneNode>): FigmaNodeProxy {
-    const node = this.graph.createNode('COMPARTMENT', this._currentPageId, { name: label, ...overrides })
+    const node = this.graph.createNode('COMPARTMENT', this._currentPageId, {
+      name: label,
+      ...overrides
+    })
     return this.wrapNode(node.id)
   }
 
@@ -432,22 +425,9 @@ export class FigmaAPI implements NodeProxyHost {
     parent: (BaseNode & ChildrenMixin) | FigmaNodeProxy,
     index?: number
   ): FigmaBooleanOperationNode {
-    if (nodes.length < 2) throw new Error('Need at least 2 nodes for boolean operation')
     const parentId = this._nodeId(parent)
-    const first = this.graph.getNode(this._nodeId(nodes[0]))
-    if (!first) throw new Error('Node not found')
-    const group = this.graph.createNode('BOOLEAN_OPERATION', parentId, {
-      name: `Boolean ${operation.toLowerCase()}`,
-      x: first.x,
-      y: first.y,
-      width: first.width,
-      height: first.height,
-      booleanOperation: operation
-    })
-    for (const node of nodes) {
-      this.graph.reparentNode(this._nodeId(node), group.id)
-    }
-    if (index != null) this.graph.reorderChild(group.id, parentId, index)
+    const nodeIds = nodes.map((node) => this._nodeId(node))
+    const group = createBooleanOperationNode(this.graph, operation, nodeIds, parentId, index)
     return this.wrapNode(group.id) as FigmaBooleanOperationNode
   }
 
@@ -525,38 +505,15 @@ export class FigmaAPI implements NodeProxyHost {
       if (!raw) throw new Error('Node not found')
       sourceNodes.push(raw)
     }
-    const vector = this._renderer
-      ? this._flattenWithRenderer(sourceNodes, parentId)
-      : this._flattenPlaceholder(sourceNodes, parentId)
+    const renderer = this._renderer
+    const vector = renderer
+      ? flattenNodesWithRenderer(this.graph, renderer, sourceNodes, parentId)
+      : createFlattenPlaceholder(this.graph, sourceNodes, parentId)
     if (index != null) this.graph.reorderChild(vector.id, parentId, index)
     for (const node of nodes) {
       this.graph.deleteNode(this._nodeId(node))
     }
     return this.wrapNode(vector.id) as FigmaVectorNode
-  }
-
-  private _flattenPlaceholder(nodes: CoreSceneNode[], parentId: string): CoreSceneNode {
-    const first = nodes[0]
-    return this.graph.createNode('VECTOR', parentId, {
-      name: 'Flatten',
-      x: first.x,
-      y: first.y,
-      width: first.width,
-      height: first.height,
-      fills: copyFills(first.fills)
-    })
-  }
-
-  private _flattenWithRenderer(nodes: CoreSceneNode[], parentId: string): CoreSceneNode {
-    const renderer = this._renderer
-    if (!renderer) return this._flattenPlaceholder(nodes, parentId)
-    if (nodes.some((node) => !canMakeBooleanSourceNode(node, this.graph))) {
-      throw new Error('Cannot flatten unsupported node type')
-    }
-
-    const vectorProps = flattenNodesToVectorProps(renderer, this.graph, nodes)
-    if (!vectorProps) throw new Error('Cannot flatten empty node path')
-    return this.graph.createNode('VECTOR', parentId, vectorProps)
   }
 
   flattenNode(nodeIds: string[]): FigmaVectorNode {
@@ -578,16 +535,10 @@ export class FigmaAPI implements NodeProxyHost {
       center: { x: this._viewport.x, y: this._viewport.y },
       zoom: this._viewport.zoom,
       scrollAndZoomIntoView: (nodes) => {
-        const b = computeBounds(nodes.map((n) => n.absoluteBoundingBox))
-        if (b.width === 0 && b.height === 0 && nodes.length === 0) return
-
-        const padding = 80
-        const contentW = b.width + padding * 2
-        const contentH = b.height + padding * 2
         const viewW = IS_BROWSER ? window.innerWidth : 1280
         const viewH = IS_BROWSER ? window.innerHeight : 720
-        const zoom = Math.min(viewW / contentW, viewH / contentH, 1)
-        this._viewport = { x: b.x + b.width / 2, y: b.y + b.height / 2, zoom }
+        const next = computeScrollZoom(nodes, viewW, viewH)
+        if (next) this._viewport = next
       }
     }
   }

@@ -9,7 +9,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import PanelSection from '@/components/ui/panel/PanelSection.vue'
 import { ARC_TYPE_LABELS } from './labels'
 
-const props = defineProps<{
+const { data } = defineProps<{
   node: SceneNode
   data: PathwayNodeData
 }>()
@@ -17,18 +17,18 @@ const props = defineProps<{
 const store = useEditorStore()
 const { panels } = useI18n()
 
-const arcType = props.data.arcType ?? 'consumption'
+const arcType = data.arcType ?? 'consumption'
 
 const sourceName = computed(() => {
-  if (!props.data.sourceId) return '—'
-  const sourceNode = store.graph.getNode(props.data.sourceId)
-  return sourceNode?.name ?? props.data.sourceId
+  if (!data.sourceId) return '—'
+  const sourceNode = store.graph.getNode(data.sourceId)
+  return sourceNode?.name ?? data.sourceId
 })
 
 const targetName = computed(() => {
-  if (!props.data.targetId) return '—'
-  const targetNode = store.graph.getNode(props.data.targetId)
-  return targetNode?.name ?? props.data.targetId
+  if (!data.targetId) return '—'
+  const targetNode = store.graph.getNode(data.targetId)
+  return targetNode?.name ?? data.targetId
 })
 </script>
 

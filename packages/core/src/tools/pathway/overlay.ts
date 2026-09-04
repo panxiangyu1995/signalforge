@@ -20,7 +20,7 @@ export const overlayExpressionData = defineTool({
   execute: (figma, args) => {
     let parsed: Record<string, number>
     try {
-      parsed = JSON.parse(args.data_json as string)
+      parsed = JSON.parse(args.data_json)
     } catch {
       return { error: 'Invalid JSON in data_json parameter' }
     }

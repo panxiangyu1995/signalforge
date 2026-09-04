@@ -7,13 +7,14 @@ export { default as TransformMatrix } from './matrix'
 export type { Mat3 } from './matrix'
 export { UndoManager, type UndoEntry, type UndoManagerOptions } from './undo'
 
-import { omit } from 'es-toolkit/object'
 import { createNanoEvents } from 'nanoevents'
 
 import { cloneNodeProps } from './copy'
 import { bindNodeEvents } from './events'
 import * as HitTest from './hit-test'
 import * as Instances from './instances'
+import { LAYOUT_AFFECTING_KEYS } from './layout-keys'
+import { removeStaleBindings } from './node-bindings'
 import { CONTAINER_TYPES, createDefaultNode } from './node-defaults'
 import { updateNodePreview } from './preview'
 import { clearEditedSourceMetadata } from './source-metadata'
@@ -21,7 +22,7 @@ import { TEXT_PICTURE_KEYS } from './text-picture'
 import * as Variables from './variables'
 import { normalizeVectorNetwork } from './vector-network'
 
-export type { GUID, Color } from './primitives'
+export type { GUID, Color, Vector } from './primitives'
 export * from './types'
 
 import type { Emitter } from 'nanoevents'
@@ -44,30 +45,22 @@ import type {
 export { cloneVectorNetwork, normalizeVectorNetwork, validateVectorNetwork } from './vector-network'
 
 export {
-  PATHWAY_PLUGIN_ID, LEGACY_PATHWAY_PLUGIN_ID, PATHWAY_PLUGIN_KEY, ANNOTATION_PLUGIN_KEY,
-  getPathwayData, setPathwayData, updatePathwayData, computeUpdatedPluginData,
-  type PathwayGlyphType, type PathwayProcessType, type PathwayArcType,
+  PATHWAY_PLUGIN_ID,
+  LEGACY_PATHWAY_PLUGIN_ID,
+  PATHWAY_PLUGIN_KEY,
+  ANNOTATION_PLUGIN_KEY,
+  getPathwayData,
+  setPathwayData,
+  updatePathwayData,
+  computeUpdatedPluginData,
+  type PathwayGlyphType,
+  type PathwayProcessType,
+  type PathwayArcType,
   type PathwayNodeData,
-  type PathwayAnnotationType, type PathwayAnnotation,
+  type PathwayAnnotationType,
+  type PathwayAnnotation
 } from './pathway-data'
 
-function removeStaleBindings(
-  node: SceneNode,
-  field: 'fills' | 'strokes',
-  changes: Partial<SceneNode>
-): void {
-  const len = node[field].length
-  const stale = Object.keys(node.boundVariables).filter((k) => {
-    if (k === field) return true
-    if (!k.startsWith(`${field}/`)) return false
-    const i = Number.parseInt(k.split('/')[1] ?? '', 10)
-    return Number.isNaN(i) || i < 0 || i >= len
-  })
-  if (stale.length > 0) {
-    node.boundVariables = omit(node.boundVariables, stale)
-    changes.boundVariables = { ...node.boundVariables }
-  }
-}
 let nextLocalID = 1
 
 export function generateId(): string {
@@ -292,16 +285,19 @@ export class SceneGraph {
     while (this.nodes.has(id)) id = generateId()
     return id
   }
+  private addToInstanceIndex(componentId: string, id: string): void {
+    let set = this.instanceIndex.get(componentId)
+    if (!set) {
+      set = new Set()
+      this.instanceIndex.set(componentId, set)
+    }
+    set.add(id)
+  }
   private registerNode(node: SceneNode, parentId: string | null): SceneNode {
     node.parentId = parentId
     this.nodes.set(node.id, node)
     if (node.type === 'INSTANCE' && node.componentId) {
-      let set = this.instanceIndex.get(node.componentId)
-      if (!set) {
-        set = new Set()
-        this.instanceIndex.set(node.componentId, set)
-      }
-      set.add(node.id)
+      this.addToInstanceIndex(node.componentId, node.id)
     }
     if (!this._eventsMuted) this.emitter.emit('node:created', node)
     return node
@@ -326,44 +322,7 @@ export class SceneGraph {
 
   static TEXT_PICTURE_KEYS: ReadonlySet<string> = TEXT_PICTURE_KEYS
 
-  static LAYOUT_AFFECTING_KEYS: ReadonlySet<string> = new Set([
-    'x',
-    'y',
-    'width',
-    'height',
-    'rotation',
-    'flipX',
-    'flipY',
-    'layoutMode',
-    'layoutDirection',
-    'itemSpacing',
-    'counterAxisSpacing',
-    'paddingLeft',
-    'paddingRight',
-    'paddingTop',
-    'paddingBottom',
-    'primaryAxisAlign',
-    'counterAxisAlign',
-    'counterAxisAlignContent',
-    'layoutWrap',
-    'primaryAxisSizing',
-    'counterAxisSizing',
-    'layoutPositioning',
-    'layoutGrow',
-    'layoutAlignSelf',
-    'strokesIncludedInLayout',
-    'horizontalConstraint',
-    'verticalConstraint',
-    'gridTemplateColumns',
-    'gridTemplateRows',
-    'gridColumnGap',
-    'gridRowGap',
-    'gridPosition',
-    'minWidth',
-    'maxWidth',
-    'minHeight',
-    'maxHeight'
-  ])
+  static LAYOUT_AFFECTING_KEYS: ReadonlySet<string> = LAYOUT_AFFECTING_KEYS
 
   runPreviewUpdates(fn: () => void): void {
     this.previewMutationDepth++
@@ -386,7 +345,15 @@ export class SceneGraph {
   }
   updateNodePreview(id: string, changes: Partial<SceneNode>): void {
     const appliedChanges = updateNodePreview(this, id, changes)
-    if (appliedChanges && !this._eventsMuted) this.emitter.emit('node:previewUpdated', id, appliedChanges)
+    if (appliedChanges && !this._eventsMuted)
+      this.emitter.emit('node:previewUpdated', id, appliedChanges)
+  }
+  private updateInstanceIndex(id: string, node: SceneNode, changes: Partial<SceneNode>): void {
+    if (node.type !== 'INSTANCE') return
+    if (!('componentId' in changes)) return
+    if (changes.componentId === node.componentId) return
+    if (node.componentId) this.instanceIndex.get(node.componentId)?.delete(id)
+    if (changes.componentId) this.addToInstanceIndex(changes.componentId, id)
   }
   updateNode(id: string, changes: Partial<SceneNode>): void {
     if (this.previewMutationDepth > 0) {
@@ -401,21 +368,7 @@ export class SceneGraph {
     // Fills, strokes, effects, plugin data changes do NOT affect absolute position.
     const affectsLayout = Object.keys(changes).some((k) => SceneGraph.LAYOUT_AFFECTING_KEYS.has(k))
     if (affectsLayout) this.absPosCache.clear()
-    if (
-      node.type === 'INSTANCE' &&
-      'componentId' in changes &&
-      changes.componentId !== node.componentId
-    ) {
-      if (node.componentId) this.instanceIndex.get(node.componentId)?.delete(id)
-      if (changes.componentId) {
-        let set = this.instanceIndex.get(changes.componentId)
-        if (!set) {
-          set = new Set()
-          this.instanceIndex.set(changes.componentId, set)
-        }
-        set.add(id)
-      }
-    }
+    this.updateInstanceIndex(id, node, changes)
     if (node.type === 'TEXT') {
       const textChanged = Object.keys(changes).some((k) => TEXT_PICTURE_KEYS.has(k))
       if (node.textPicture && textChanged) node.textPicture = null

@@ -1,5 +1,4 @@
-import type { SceneGraph, SceneNode } from '@signal-forge/scene-graph'
-import { getPathwayData } from '@signal-forge/scene-graph'
+import type { SceneGraph } from '@signal-forge/scene-graph'
 
 import { parseColor } from '#core/color'
 

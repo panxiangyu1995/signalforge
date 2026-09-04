@@ -21,7 +21,6 @@ export const importSbgnMl = defineTool({
 
       const sourcePages = sourceGraph.getPages()
       const sourcePage = sourcePages[0]
-      if (!sourcePage) return { error: 'SBGN-ML has no pages' }
 
       const targetPageId = figma.currentPage.id
       const targetPage = figma.graph.getNode(targetPageId)
@@ -78,10 +77,10 @@ export const importSbgnMl = defineTool({
 
       for (const [oldId, newId] of idMap) {
         const oldNode = sourceGraph.getNode(oldId)
-        if (!oldNode || oldNode.type !== 'PATHWAY_ARC') continue
+        if (oldNode?.type !== 'PATHWAY_ARC') continue
 
         const oldData = getPathwayData(oldNode)
-        if (!oldData?.sourceId || !oldData?.targetId) continue
+        if (!oldData?.sourceId || !oldData.targetId) continue
 
         const newSourceId = idMap.get(oldData.sourceId)
         const newTargetId = idMap.get(oldData.targetId)

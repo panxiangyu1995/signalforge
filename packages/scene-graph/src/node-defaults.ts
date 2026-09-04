@@ -1,6 +1,13 @@
 import { BLACK, DEFAULT_FONT_FAMILY, DEFAULT_STROKE_MITER_LIMIT } from './constants'
 import type { NodeType, SceneNode } from './types'
 
+export function defaultSizeFor(type: NodeType): { width: number; height: number } {
+  if (type === 'PATHWAY_PROCESS') return { width: 24, height: 24 }
+  if (type === 'PATHWAY_ARC') return { width: 0, height: 0 }
+  if (type === 'COMPARTMENT') return { width: 800, height: 600 }
+  return { width: 100, height: 100 }
+}
+
 export function createDefaultNode(
   generateId: () => string,
   type: NodeType,
@@ -14,14 +21,7 @@ export function createDefaultNode(
     childIds: [],
     x: 0,
     y: 0,
-    width: type === 'PATHWAY_PROCESS' ? 24
-         : type === 'PATHWAY_ARC' ? 0
-         : type === 'COMPARTMENT' ? 800
-         : 100,
-    height: type === 'PATHWAY_PROCESS' ? 24
-          : type === 'PATHWAY_ARC' ? 0
-          : type === 'COMPARTMENT' ? 600
-          : 100,
+    ...defaultSizeFor(type),
     rotation: 0,
     source: {
       format: null,

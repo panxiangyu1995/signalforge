@@ -63,7 +63,7 @@ export function computeOrthogonalBendPoints(
 
   for (const arc of arcs) {
     const data = getPathwayData(arc)
-    if (!data?.sourceId || !data?.targetId) continue
+    if (!data?.sourceId || !data.targetId) continue
 
     const ports = computeArcPorts(graph, data.sourceId, data.targetId, data.arcType, direction)
     if (!ports) continue

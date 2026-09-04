@@ -12,6 +12,7 @@ export {
 } from './formats'
 export { exportFigFile, parseFigFile, readFigFile } from './formats/fig'
 export { parsePenFile, readPenFile } from './formats/pen'
+export { readSbgnMl, readSbgnMlAsync } from './formats/sbgn-ml/read'
 export { sceneNodeToJSX, selectionToJSX, type JSXFormat } from './formats/jsx'
 export {
   computeContentBounds,

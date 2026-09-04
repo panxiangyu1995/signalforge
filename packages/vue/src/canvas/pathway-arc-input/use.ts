@@ -1,6 +1,5 @@
 import type { Editor } from '@signal-forge/core/editor'
-
-import { getPathwayData, updatePathwayData } from '@signal-forge/scene-graph'
+import { updatePathwayData } from '@signal-forge/scene-graph'
 
 import type { HitTestFns } from '#vue/shared/input/select'
 import type { DragPathwayArc, DragState } from '#vue/shared/input/types'
@@ -10,7 +9,6 @@ const PATHWAY_NODE_TYPES = new Set(['PATHWAY_GLYPH', 'PATHWAY_PROCESS', 'COMPART
 export function startPathwayArcInput(
   cx: number,
   cy: number,
-  editor: Editor,
   hitFns: HitTestFns,
   setDrag: (d: DragState) => void
 ) {
@@ -27,20 +25,12 @@ export function startPathwayArcInput(
   })
 }
 
-export function handlePathwayArcMove(
-  d: DragPathwayArc,
-  cx: number,
-  cy: number
-) {
+export function handlePathwayArcMove(d: DragPathwayArc, cx: number, cy: number) {
   d.currentX = cx
   d.currentY = cy
 }
 
-export function handlePathwayArcUp(
-  d: DragPathwayArc,
-  editor: Editor,
-  hitFns: HitTestFns
-) {
+export function handlePathwayArcUp(d: DragPathwayArc, editor: Editor, hitFns: HitTestFns) {
   const hit = hitFns.hitTestInScope(d.currentX, d.currentY, false)
   if (!hit || hit.id === d.sourceId || !PATHWAY_NODE_TYPES.has(hit.type)) {
     editor.setTool('SELECT')

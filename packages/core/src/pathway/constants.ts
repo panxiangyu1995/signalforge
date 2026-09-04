@@ -62,7 +62,7 @@ export const SBGN_STYLE = {
   idealEdgeLength: 50,
   nodeRepulsion: 4500,
   nodeSeparation: 75,
-  layoutPadding: 30,
+  layoutPadding: 30
 } as const
 
 export const PUBLICATION_STYLE = {
@@ -74,7 +74,7 @@ export const PUBLICATION_STYLE = {
     perturbation: '#D1F2EB',
     phenotype: '#FEF9E7',
     source_sink: '#F2F3F4',
-    unspecified_entity: '#F2F3F4',
+    unspecified_entity: '#F2F3F4'
   },
 
   entityGradients: {
@@ -85,7 +85,7 @@ export const PUBLICATION_STYLE = {
     perturbation: { top: '#D1F2EB', bottom: '#A3E4D7' },
     phenotype: { top: '#FEF9E7', bottom: '#F9E79F' },
     source_sink: { top: '#F2F3F4', bottom: '#D5D8DC' },
-    unspecified_entity: { top: '#F2F3F4', bottom: '#D5D8DC' },
+    unspecified_entity: { top: '#F2F3F4', bottom: '#D5D8DC' }
   },
 
   compartmentFills: {
@@ -96,18 +96,21 @@ export const PUBLICATION_STYLE = {
     mitochondria: 'rgba(255, 183, 77, 0.10)',
     endoplasmic_reticulum: 'rgba(129, 199, 132, 0.10)',
     golgi: 'rgba(255, 138, 101, 0.10)',
-    default: 'rgba(0, 0, 0, 0.03)',
+    default: 'rgba(0, 0, 0, 0.03)'
   },
 
   compartmentGradients: {
-    extracellular: { top: 'rgba(173, 216, 230, 0.15)', bottom: 'rgba(173, 216, 230, 0.08)' },
-    membrane: { top: 'rgba(255, 193, 7, 0.18)', bottom: 'rgba(255, 193, 7, 0.10)' },
-    cytoplasm: { top: 'rgba(200, 230, 201, 0.13)', bottom: 'rgba(200, 230, 201, 0.06)' },
-    nucleus: { top: 'rgba(206, 147, 216, 0.13)', bottom: 'rgba(206, 147, 216, 0.06)' },
-    mitochondria: { top: 'rgba(255, 183, 77, 0.13)', bottom: 'rgba(255, 183, 77, 0.06)' },
-    endoplasmic_reticulum: { top: 'rgba(129, 199, 132, 0.13)', bottom: 'rgba(129, 199, 132, 0.06)' },
-    golgi: { top: 'rgba(255, 138, 101, 0.13)', bottom: 'rgba(255, 138, 101, 0.06)' },
-    default: { top: 'rgba(0, 0, 0, 0.04)', bottom: 'rgba(0, 0, 0, 0.02)' },
+    extracellular: { top: 'rgba(173, 216, 230, 0.34)', bottom: 'rgba(173, 216, 230, 0.18)' },
+    membrane: { top: 'rgba(255, 193, 7, 0.40)', bottom: 'rgba(255, 193, 7, 0.22)' },
+    cytoplasm: { top: 'rgba(200, 230, 201, 0.32)', bottom: 'rgba(200, 230, 201, 0.16)' },
+    nucleus: { top: 'rgba(206, 147, 216, 0.32)', bottom: 'rgba(206, 147, 216, 0.16)' },
+    mitochondria: { top: 'rgba(255, 183, 77, 0.32)', bottom: 'rgba(255, 183, 77, 0.16)' },
+    endoplasmic_reticulum: {
+      top: 'rgba(129, 199, 132, 0.32)',
+      bottom: 'rgba(129, 199, 132, 0.16)'
+    },
+    golgi: { top: 'rgba(255, 138, 101, 0.32)', bottom: 'rgba(255, 138, 101, 0.16)' },
+    default: { top: 'rgba(0, 0, 0, 0.08)', bottom: 'rgba(0, 0, 0, 0.04)' }
   },
 
   entityBorders: {
@@ -119,29 +122,29 @@ export const PUBLICATION_STYLE = {
     phenotype: '#F39C12',
     source_sink: '#6A6A6A',
     unspecified_entity: '#555',
-    default: '#555',
+    default: '#555'
   },
 
   edgeColors: {
     activation: '#5B9BD5',
     inhibition: '#E74C3C',
     catalysis: '#27AE60',
-    default: '#555',
+    default: '#555'
   },
 
   dropShadow: {
     offsetX: 1,
     offsetY: 2,
     blur: 3,
-    color: 'rgba(0, 0, 0, 0.15)',
+    color: 'rgba(0, 0, 0, 0.15)'
   },
 
   compartmentShadow: {
     offsetX: 2,
     offsetY: 4,
     blur: 8,
-    color: 'rgba(0, 0, 0, 0.08)',
-  },
+    color: 'rgba(0, 0, 0, 0.08)'
+  }
 } as const
 
 export const REALISTIC_STYLE = {
@@ -153,18 +156,22 @@ export const REALISTIC_STYLE = {
     perturbation: '#A3E4D7',
     phenotype: '#F9E79F',
     source_sink: '#D5D8DC',
-    unspecified_entity: '#D5D8DC',
+    unspecified_entity: '#D5D8DC'
   },
 
   entityRadialGradients: {
     macromolecule: { cx: 0.35, cy: 0.3, stops: ['#C5E8F7', '#85C1E9', '#5DADE2', '#2E86C1'] },
     simple_chemical: { cx: 0.35, cy: 0.3, stops: ['#FADBD8', '#F1948A', '#E74C3C', '#C0392B'] },
-    nucleic_acid_feature: { cx: 0.35, cy: 0.3, stops: ['#D5F5E3', '#82E0AA', '#27AE60', '#1E8449'] },
+    nucleic_acid_feature: {
+      cx: 0.35,
+      cy: 0.3,
+      stops: ['#D5F5E3', '#82E0AA', '#27AE60', '#1E8449']
+    },
     complex: { cx: 0.35, cy: 0.3, stops: ['#E8DAEF', '#C39BD3', '#8E44AD', '#6C3483'] },
     perturbation: { cx: 0.35, cy: 0.3, stops: ['#D1F2EB', '#76D7C4', '#16A085', '#0E6655'] },
     phenotype: { cx: 0.35, cy: 0.3, stops: ['#FEF9E7', '#F9E79F', '#F39C12', '#D68910'] },
     source_sink: { cx: 0.35, cy: 0.3, stops: ['#F2F3F4', '#D5D8DC', '#6A6A6A', '#4A4A4A'] },
-    unspecified_entity: { cx: 0.35, cy: 0.3, stops: ['#F2F3F4', '#D5D8DC', '#6A6A6A', '#4A4A4A'] },
+    unspecified_entity: { cx: 0.35, cy: 0.3, stops: ['#F2F3F4', '#D5D8DC', '#6A6A6A', '#4A4A4A'] }
   },
 
   entityBorders: {
@@ -176,7 +183,7 @@ export const REALISTIC_STYLE = {
     phenotype: '#D68910',
     source_sink: '#4A4A4A',
     unspecified_entity: '#4A4A4A',
-    default: '#4A4A4A',
+    default: '#4A4A4A'
   },
 
   highlightColor: 'rgba(255, 255, 255, 0.4)',
@@ -184,7 +191,7 @@ export const REALISTIC_STYLE = {
     offsetX: 1,
     offsetY: 2,
     blur: 4,
-    color: 'rgba(0, 0, 0, 0.15)',
+    color: 'rgba(0, 0, 0, 0.15)'
   },
   bevelTopColor: 'rgba(255, 255, 255, 0.3)',
   bevelBottomColor: 'rgba(0, 0, 0, 0.2)',
@@ -193,42 +200,56 @@ export const REALISTIC_STYLE = {
     offsetX: 3,
     offsetY: 6,
     blur: 12,
-    color: 'rgba(0, 0, 0, 0.25)',
+    color: 'rgba(0, 0, 0, 0.25)'
   },
 
   compartmentShadow: {
     offsetX: 3,
     offsetY: 6,
     blur: 12,
-    color: 'rgba(0, 0, 0, 0.12)',
+    color: 'rgba(0, 0, 0, 0.12)'
   },
 
   compartmentGradients: {
-    extracellular: { top: 'rgba(173, 216, 230, 0.22)', bottom: 'rgba(173, 216, 230, 0.12)' },
-    membrane: { top: 'rgba(255, 193, 7, 0.25)', bottom: 'rgba(255, 193, 7, 0.15)' },
-    cytoplasm: { top: 'rgba(200, 230, 201, 0.20)', bottom: 'rgba(200, 230, 201, 0.10)' },
-    nucleus: { top: 'rgba(206, 147, 216, 0.20)', bottom: 'rgba(206, 147, 216, 0.10)' },
-    mitochondria: { top: 'rgba(255, 183, 77, 0.20)', bottom: 'rgba(255, 183, 77, 0.10)' },
-    endoplasmic_reticulum: { top: 'rgba(129, 199, 132, 0.20)', bottom: 'rgba(129, 199, 132, 0.10)' },
-    golgi: { top: 'rgba(255, 138, 101, 0.20)', bottom: 'rgba(255, 138, 101, 0.10)' },
-    default: { top: 'rgba(0, 0, 0, 0.06)', bottom: 'rgba(0, 0, 0, 0.03)' },
+    extracellular: { top: 'rgba(173, 216, 230, 0.50)', bottom: 'rgba(173, 216, 230, 0.28)' },
+    membrane: { top: 'rgba(255, 193, 7, 0.55)', bottom: 'rgba(255, 193, 7, 0.30)' },
+    cytoplasm: { top: 'rgba(200, 230, 201, 0.48)', bottom: 'rgba(200, 230, 201, 0.26)' },
+    nucleus: { top: 'rgba(206, 147, 216, 0.48)', bottom: 'rgba(206, 147, 216, 0.26)' },
+    mitochondria: { top: 'rgba(255, 183, 77, 0.48)', bottom: 'rgba(255, 183, 77, 0.26)' },
+    endoplasmic_reticulum: {
+      top: 'rgba(129, 199, 132, 0.48)',
+      bottom: 'rgba(129, 199, 132, 0.26)'
+    },
+    golgi: { top: 'rgba(255, 138, 101, 0.48)', bottom: 'rgba(255, 138, 101, 0.26)' },
+    default: { top: 'rgba(0, 0, 0, 0.12)', bottom: 'rgba(0, 0, 0, 0.06)' }
+  },
+
+  compartmentBorders: {
+    extracellular: '#5E93B8',
+    membrane: '#B98A32',
+    cytoplasm: '#5F9958',
+    nucleus: '#8A5CA8',
+    mitochondria: '#C07830',
+    endoplasmic_reticulum: '#5F9958',
+    golgi: '#C06040',
+    default: '#8A8A8A'
   },
 
   edgeColors: {
     activation: '#2E86C1',
     inhibition: '#C0392B',
     catalysis: '#1E8449',
-    default: '#4A4A4A',
+    default: '#46586E'
   },
 
-  arcWidth: 2.5,
-  decorationScale: 2.0,
-  borderWidth: 2,
+  arcWidth: 4,
+  decorationScale: 2.4,
+  borderWidth: 2.5,
 
   textOutline: {
     color: 'white',
-    width: 2,
-  },
+    width: 2
+  }
 } as const
 
 export type PathwayStyle = 'sbgn' | 'publication' | 'realistic'

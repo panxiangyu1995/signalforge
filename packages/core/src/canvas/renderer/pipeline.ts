@@ -1,6 +1,6 @@
 import type { Canvas } from 'canvaskit-wasm'
 
-import type { SceneGraph, SceneNode } from '@signal-forge/scene-graph'
+import type { SceneGraph } from '@signal-forge/scene-graph'
 import { computeDescendantVisualBounds } from '@signal-forge/scene-graph/geometry'
 
 import { drawPageGuides } from '#core/canvas/page-guides'
@@ -9,7 +9,12 @@ import type { EditorState } from '#core/editor/types'
 
 import { renderSceneBacking, updateSceneBackingPreviewState } from './retained-backing'
 
-const PATHWAY_NODE_TYPES = new Set(['PATHWAY_GLYPH', 'PATHWAY_PROCESS', 'PATHWAY_ARC', 'COMPARTMENT'])
+const PATHWAY_NODE_TYPES = new Set([
+  'PATHWAY_GLYPH',
+  'PATHWAY_PROCESS',
+  'PATHWAY_ARC',
+  'COMPARTMENT'
+])
 
 function isPathwayPage(graph: SceneGraph, pageId: string): boolean {
   const page = graph.getNode(pageId)
@@ -39,10 +44,15 @@ function renderPathwayPageChildren(
   for (const childId of pageNode.childIds) {
     const child = graph.getNode(childId)
     if (!child) continue
-    if (child.type === 'COMPARTMENT') { compartmentIds.push(childId) }
-    else if (child.type === 'PATHWAY_ARC') { arcIds.push(childId) }
-    else if (child.type === 'PATHWAY_GLYPH' || child.type === 'PATHWAY_PROCESS') { entityIds.push(childId) }
-    else { otherIds.push(childId) }
+    if (child.type === 'COMPARTMENT') {
+      compartmentIds.push(childId)
+    } else if (child.type === 'PATHWAY_ARC') {
+      arcIds.push(childId)
+    } else if (child.type === 'PATHWAY_GLYPH' || child.type === 'PATHWAY_PROCESS') {
+      entityIds.push(childId)
+    } else {
+      otherIds.push(childId)
+    }
   }
 
   for (const id of compartmentIds) r.renderNode(canvas, graph, id, overlays)

@@ -175,5 +175,22 @@
   "blendModeHue": "色相",
   "blendModeSaturation": "彩度",
   "blendModeColor": "カラー",
-  "blendModeLuminosity": "輝度"
+  "blendModeLuminosity": "輝度",
+  "pathway": "パスウェイ",
+  "glyphType": "グリフタイプ",
+  "processType": "プロセスタイプ",
+  "arcType": "アークタイプ",
+  "stateVariable": "状態変数",
+  "unitOfInformation": "情報ユニット",
+  "compartment": "コンパートメント",
+  "cloneMarker": "クローンマーカー",
+  "variable": "変数",
+  "value": "値",
+  "addStateVariable": "状態変数を追加",
+  "addUnitOfInformation": "情報ユニットを追加",
+  "removeStateVariable": "状態変数を削除",
+  "removeUnitOfInformation": "情報ユニットを削除",
+  "source": "ソース",
+  "target": "ターゲット",
+  "inspector": "インスペクター"
 }

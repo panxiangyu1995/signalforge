@@ -62,7 +62,7 @@ export const modifyArc = defineTool({
     const updates: Record<string, unknown> = {}
 
     if (args.arc_type) {
-      if (!ARC_TYPES.includes(args.arc_type as string)) {
+      if (!ARC_TYPES.includes(args.arc_type)) {
         return { error: `Invalid arc_type: ${args.arc_type}. Must be one of: ${ARC_TYPES.join(', ')}` }
       }
       updates.arcType = args.arc_type as PathwayArcType

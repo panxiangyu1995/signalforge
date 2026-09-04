@@ -1,3 +1,4 @@
+import type { Vector } from './primitives'
 import type { SceneNode } from './types'
 
 export const PATHWAY_PLUGIN_ID = 'signal-forge'
@@ -13,18 +14,36 @@ export interface PathwayAnnotation {
 }
 
 export type PathwayGlyphType =
-  | 'macromolecule' | 'simple_chemical' | 'complex'
-  | 'nucleic_acid_feature' | 'unspecified_entity' | 'perturbation'
-  | 'phenotype' | 'source_sink'
+  | 'macromolecule'
+  | 'simple_chemical'
+  | 'complex'
+  | 'nucleic_acid_feature'
+  | 'unspecified_entity'
+  | 'perturbation'
+  | 'phenotype'
+  | 'source_sink'
 
 export type PathwayProcessType =
-  | 'process' | 'transport' | 'association' | 'dissociation'
-  | 'omitted_process' | 'uncertain_process'
+  | 'process'
+  | 'transport'
+  | 'association'
+  | 'dissociation'
+  | 'omitted_process'
+  | 'uncertain_process'
 
 export type PathwayArcType =
-  | 'consumption' | 'production' | 'modulation' | 'stimulation'
-  | 'catalysis' | 'inhibition' | 'necessary_stimulation' | 'trigger'
-  | 'logic_and' | 'logic_or' | 'logic_not' | 'equivalence'
+  | 'consumption'
+  | 'production'
+  | 'modulation'
+  | 'stimulation'
+  | 'catalysis'
+  | 'inhibition'
+  | 'necessary_stimulation'
+  | 'trigger'
+  | 'logic_and'
+  | 'logic_or'
+  | 'logic_not'
+  | 'equivalence'
 
 export interface PathwayNodeData {
   glyphType?: PathwayGlyphType
@@ -40,23 +59,30 @@ export interface PathwayNodeData {
   targetId?: string
   sourcePort?: { side: string; x: number; y: number }
   targetPort?: { side: string; x: number; y: number }
-  bendPoints?: { x: number; y: number }[]
+  bendPoints?: Vector[]
   portInfo?: { ports: { side: string; x: number; y: number }[] }
 }
 
 export function getPathwayData(node: SceneNode): PathwayNodeData | null {
   const entry = node.pluginData.find(
-    e => (e.pluginId === PATHWAY_PLUGIN_ID || e.pluginId === LEGACY_PATHWAY_PLUGIN_ID) && e.key === PATHWAY_PLUGIN_KEY
+    (e) =>
+      (e.pluginId === PATHWAY_PLUGIN_ID || e.pluginId === LEGACY_PATHWAY_PLUGIN_ID) &&
+      e.key === PATHWAY_PLUGIN_KEY
   )
   if (!entry) return null
-  try { return JSON.parse(entry.value) as PathwayNodeData }
-  catch { return null }
+  try {
+    return JSON.parse(entry.value) as PathwayNodeData
+  } catch {
+    return null
+  }
 }
 
 export function setPathwayData(node: SceneNode, data: PathwayNodeData): void {
   const json = JSON.stringify(data)
   const idx = node.pluginData.findIndex(
-    e => (e.pluginId === PATHWAY_PLUGIN_ID || e.pluginId === LEGACY_PATHWAY_PLUGIN_ID) && e.key === PATHWAY_PLUGIN_KEY
+    (e) =>
+      (e.pluginId === PATHWAY_PLUGIN_ID || e.pluginId === LEGACY_PATHWAY_PLUGIN_ID) &&
+      e.key === PATHWAY_PLUGIN_KEY
   )
   if (idx !== -1) {
     node.pluginData[idx] = { pluginId: PATHWAY_PLUGIN_ID, key: PATHWAY_PLUGIN_KEY, value: json }
@@ -78,7 +104,9 @@ export function computeUpdatedPluginData(
   const merged = { ...existing, ...partial }
   const json = JSON.stringify(merged)
   const idx = node.pluginData.findIndex(
-    e => (e.pluginId === PATHWAY_PLUGIN_ID || e.pluginId === LEGACY_PATHWAY_PLUGIN_ID) && e.key === PATHWAY_PLUGIN_KEY
+    (e) =>
+      (e.pluginId === PATHWAY_PLUGIN_ID || e.pluginId === LEGACY_PATHWAY_PLUGIN_ID) &&
+      e.key === PATHWAY_PLUGIN_KEY
   )
   const entry = { pluginId: PATHWAY_PLUGIN_ID, key: PATHWAY_PLUGIN_KEY, value: json }
   if (idx !== -1) {

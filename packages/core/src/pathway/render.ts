@@ -1,16 +1,28 @@
 import type { Canvas, CanvasKit, ImageFilter } from 'canvaskit-wasm'
 
-import { type SceneNode, type SceneGraph, type Vector, getPathwayData, type PathwayNodeData } from '@signal-forge/scene-graph'
+import {
+  type SceneNode,
+  type SceneGraph,
+  type Vector,
+  getPathwayData,
+  type PathwayNodeData
+} from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
-import { paintPathwayGlyph } from './glyphs'
-import { paintPathwayProcess } from './processes'
 import { paintPathwayArc } from './arcs'
-import { paintPathwayLabel, paintCompartmentLabel, paintStateVariables, paintCloneMarker, paintUnitOfInformation } from './labels'
 import { SBGN_STYLE, PUBLICATION_STYLE, REALISTIC_STYLE, type PathwayStyle } from './constants'
+import { paintPathwayGlyph } from './glyphs'
+import {
+  paintPathwayLabel,
+  paintCompartmentLabel,
+  paintStateVariables,
+  paintCloneMarker,
+  paintUnitOfInformation
+} from './labels'
+import { inferMembraneType, paintMembraneLine, paintMitochondrionBody } from './membrane'
+import { paintPathwayProcess } from './processes'
 import { hexToCKColor } from './utils'
-import { inferMembraneType, paintMembraneLine } from './membrane'
 
 const MULTIMER_OFFSETS: Record<string, Vector> = {
   macromolecule: { x: 12, y: 12 },
@@ -20,12 +32,18 @@ const MULTIMER_OFFSETS: Record<string, Vector> = {
   phenotype: { x: 8, y: 8 },
   perturbation: { x: 8, y: 8 },
   source_sink: { x: 5, y: 5 },
-  unspecified_entity: { x: 8, y: 8 },
+  unspecified_entity: { x: 8, y: 8 }
 }
 
 export type CompartmentType =
-  | 'extracellular' | 'membrane' | 'cytoplasm' | 'nucleus'
-  | 'mitochondria' | 'endoplasmic_reticulum' | 'golgi' | 'default'
+  | 'extracellular'
+  | 'membrane'
+  | 'cytoplasm'
+  | 'nucleus'
+  | 'mitochondria'
+  | 'endoplasmic_reticulum'
+  | 'golgi'
+  | 'default'
 
 export function inferCompartmentType(name: string): CompartmentType {
   const lower = name.toLowerCase()
@@ -42,12 +60,19 @@ export function inferCompartmentType(name: string): CompartmentType {
 function applyDropShadow(
   ck: CanvasKit,
   r: SkiaRenderer,
-  spec: { readonly offsetX: number; readonly offsetY: number; readonly blur: number; readonly color: string }
+  spec: {
+    readonly offsetX: number
+    readonly offsetY: number
+    readonly blur: number
+    readonly color: string
+  }
 ): ImageFilter {
   const color = hexToCKColor(ck, spec.color)
   const filter = ck.ImageFilter.MakeDropShadow(
-    spec.offsetX, spec.offsetY,
-    spec.blur, spec.blur,
+    spec.offsetX,
+    spec.offsetY,
+    spec.blur,
+    spec.blur,
     color,
     null
   )
@@ -59,11 +84,7 @@ function clearDropShadow(r: SkiaRenderer): void {
   r.fillPaint.setImageFilter(null)
 }
 
-export function renderPathwayGlyph(
-  r: SkiaRenderer,
-  canvas: Canvas,
-  node: SceneNode
-): void {
+export function renderPathwayGlyph(r: SkiaRenderer, canvas: Canvas, node: SceneNode): void {
   const data = getPathwayData(node)
   if (!data) return
 
@@ -123,7 +144,11 @@ function paintActiveStateBorder(
     width: node.width + pad * 2,
     height: node.height + pad * 2
   }
-  const expandedData: PathwayNodeData = { ...data, stateVariables: undefined, activeState: undefined }
+  const expandedData: PathwayNodeData = {
+    ...data,
+    stateVariables: undefined,
+    activeState: undefined
+  }
   canvas.save()
   canvas.translate(-pad, -pad)
 
@@ -131,20 +156,14 @@ function paintActiveStateBorder(
   r.strokePaint.setColor(hexToCKColor(ck, SBGN_STYLE.nodeBorderColor))
   r.strokePaint.setStrokeWidth(SBGN_STYLE.defaultBorderWidth)
   const dashEffect = ck.PathEffect.MakeDash([...SBGN_STYLE.activeDashPattern], 0)
-  if (dashEffect) {
-    r.strokePaint.setPathEffect(dashEffect)
-  }
+  r.strokePaint.setPathEffect(dashEffect)
   paintPathwayGlyph(ck, canvas, expandedNode, expandedData, 'sbgn', r)
   r.strokePaint.setPathEffect(null)
-  if (dashEffect) dashEffect.delete()
+  dashEffect.delete()
   canvas.restore()
 }
 
-export function renderPathwayProcess(
-  r: SkiaRenderer,
-  canvas: Canvas,
-  node: SceneNode
-): void {
+export function renderPathwayProcess(r: SkiaRenderer, canvas: Canvas, node: SceneNode): void {
   const data = getPathwayData(node)
   if (!data) return
 
@@ -175,18 +194,15 @@ export function renderPathwayArc(
   r.fillPaint.setStyle(ck.PaintStyle.Fill)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
 
-  paintPathwayArc(ck, canvas, node, data, graph, style, r)
+  paintPathwayArc(ck, canvas, data, graph, style, r)
 }
 
-export function renderCompartment(
-  r: SkiaRenderer,
-  canvas: Canvas,
-  node: SceneNode
-): void {
+export function renderCompartment(r: SkiaRenderer, canvas: Canvas, node: SceneNode): void {
   const style: PathwayStyle = r.pathwayStyle
   const ck = r.ck
   const w = node.width
   const h = node.height
+  const compType = inferCompartmentType(node.name)
 
   const path = new ck.Path()
   try {
@@ -204,67 +220,54 @@ export function renderCompartment(
     r.fillPaint.setStyle(ck.PaintStyle.Fill)
 
     if (style === 'realistic') {
-      const compType = inferCompartmentType(node.name)
-      const grad = REALISTIC_STYLE.compartmentGradients[compType]
-      let filled = false
-      if (grad) {
-        const shader = ck.Shader.MakeLinearGradient(
-          [0, 0], [0, h],
-          [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
-          [0, 1],
-          ck.TileMode.Clamp
-        )
-        if (shader) {
-          r.fillPaint.setShader(shader)
-          canvas.drawPath(path, r.fillPaint)
-          r.fillPaint.setShader(null)
-          shader.delete()
-          filled = true
-        }
-      }
-      if (!filled) {
-        r.fillPaint.setColor(hexToCKColor(ck, 'rgba(0, 0, 0, 0.05)'))
-        canvas.drawPath(path, r.fillPaint)
-      }
-
-      const cs = REALISTIC_STYLE.compartmentShadow
-      const compShadow = ck.ImageFilter.MakeDropShadow(
-        cs.offsetX, cs.offsetY,
-        cs.blur, cs.blur,
-        hexToCKColor(ck, cs.color),
-        null
-      )
-      r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-      r.strokePaint.setColor(hexToCKColor(ck, '#777'))
-      r.strokePaint.setStrokeWidth(2)
-      r.strokePaint.setImageFilter(compShadow)
-      canvas.drawPath(path, r.strokePaint)
-      r.strokePaint.setImageFilter(null)
-      if (compShadow) compShadow.delete()
-    } else if (style === 'publication') {
-      const compType = inferCompartmentType(node.name)
-      const grad = PUBLICATION_STYLE.compartmentGradients[compType]
-      if (grad) {
-        const shader = ck.Shader.MakeLinearGradient(
-          [0, 0], [0, h],
-          [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
-          [0, 1],
-          ck.TileMode.Clamp
-        )
-        if (shader) {
-          r.fillPaint.setShader(shader)
-          canvas.drawPath(path, r.fillPaint)
-          r.fillPaint.setShader(null)
-          shader.delete()
-        } else {
-          r.fillPaint.setColor(hexToCKColor(ck, PUBLICATION_STYLE.compartmentFills[compType] ?? PUBLICATION_STYLE.compartmentFills.default))
-          canvas.drawPath(path, r.fillPaint)
-        }
+      if (compType === 'mitochondria') {
+        paintMitochondrionBody(ck, canvas, w, h, r)
       } else {
-        const fillColor = hexToCKColor(ck, PUBLICATION_STYLE.compartmentFills[compType] ?? PUBLICATION_STYLE.compartmentFills.default)
-        r.fillPaint.setColor(fillColor)
+        const grad = REALISTIC_STYLE.compartmentGradients[compType]
+        const shader = ck.Shader.MakeLinearGradient(
+          [0, 0],
+          [0, h],
+          [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
+          [0, 1],
+          ck.TileMode.Clamp
+        )
+        const cs = REALISTIC_STYLE.compartmentShadow
+        const compShadow = ck.ImageFilter.MakeDropShadow(
+          cs.offsetX,
+          cs.offsetY,
+          cs.blur,
+          cs.blur,
+          hexToCKColor(ck, cs.color),
+          null
+        )
+        r.fillPaint.setStyle(ck.PaintStyle.Fill)
+        r.fillPaint.setImageFilter(compShadow)
+        r.fillPaint.setShader(shader)
         canvas.drawPath(path, r.fillPaint)
+        r.fillPaint.setShader(null)
+        shader.delete()
+        r.fillPaint.setImageFilter(null)
+        compShadow.delete()
+
+        // Soft light boundary instead of a colored diagram-style border.
+        r.strokePaint.setStyle(ck.PaintStyle.Stroke)
+        r.strokePaint.setColor(ck.Color4f(1, 1, 1, 0.55))
+        r.strokePaint.setStrokeWidth(1.2)
+        canvas.drawPath(path, r.strokePaint)
       }
+    } else if (style === 'publication') {
+      const grad = PUBLICATION_STYLE.compartmentGradients[compType]
+      const shader = ck.Shader.MakeLinearGradient(
+        [0, 0],
+        [0, h],
+        [hexToCKColor(ck, grad.top), hexToCKColor(ck, grad.bottom)],
+        [0, 1],
+        ck.TileMode.Clamp
+      )
+      r.fillPaint.setShader(shader)
+      canvas.drawPath(path, r.fillPaint)
+      r.fillPaint.setShader(null)
+      shader.delete()
 
       const compShadow = ck.ImageFilter.MakeDropShadow(
         PUBLICATION_STYLE.compartmentShadow.offsetX,
@@ -297,13 +300,14 @@ export function renderCompartment(
     path.delete()
   }
 
-  paintCompartmentLabel(ck, canvas, node, r)
+  paintCompartmentLabel(ck, canvas, node, r, compType)
 
-  if (style === 'publication') {
-    const membraneType = inferMembraneType(node.name)
+  if (style === 'publication' || style === 'realistic') {
+    // Realistic mitochondria draw their own organelle body; no top membrane line on top of it.
+    const isRealisticMito = style === 'realistic' && compType === 'mitochondria'
+    const membraneType = isRealisticMito ? null : inferMembraneType(node.name)
     if (membraneType) {
       canvas.save()
-      canvas.translate(node.width * 0.05, 0)
       paintMembraneLine(ck, canvas, node, membraneType, r)
       canvas.restore()
     }

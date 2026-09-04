@@ -175,11 +175,9 @@ export function paintPathwayProcess(
     paintProcess(ck, canvas, node, data, style, r)
     return
   }
-  const painter = PROCESS_PAINTERS[processType]
-  if (painter) {
-    painter(ck, canvas, node, data, style, r)
-  } else {
-    paintProcess(ck, canvas, node, data, style, r)
-    console.warn(`[pathway] Unknown process type "${processType}", rendering as generic process`)
-  }
+  // PRD vocabulary admits process types this renderer does not specialize yet
+  // (e.g. 'biochemical_reaction' renders identically to 'process'), so fall
+  // back to the plain process painter instead of crashing on unknown keys.
+  const painter = PROCESS_PAINTERS[processType] ?? paintProcess
+  painter(ck, canvas, node, data, style, r)
 }

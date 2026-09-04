@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'bun:test'
-import { SceneGraph, getPathwayData } from '@signal-forge/scene-graph'
+
 import { FigmaAPI } from '@signal-forge/core/figma-api'
-import { BIOPATH_CORE_TOOLS } from '@signal-forge/core/tools'
 import { hierarchicalLayout } from '@signal-forge/core/pathway/layout/hierarchical'
 import { computeOrthogonalBendPoints } from '@signal-forge/core/pathway/layout/orthogonal'
+import { BIOPATH_CORE_TOOLS } from '@signal-forge/core/tools'
+import { SceneGraph, getPathwayData } from '@signal-forge/scene-graph'
 
 function findTool(name: string) {
-  const tool = BIOPATH_CORE_TOOLS.find(t => t.name === name)
+  const tool = BIOPATH_CORE_TOOLS.find((t) => t.name === name)
   if (!tool) throw new Error(`Tool not found: ${name}`)
   return tool
 }
@@ -22,7 +23,11 @@ function createCompartmentPathway(api: FigmaAPI) {
   addComp.execute(api, { name: 'Cytoplasm' })
   addEnt.execute(api, { name: 'JAK2', glyph_type: 'macromolecule', compartment: 'Cytoplasm' })
   addEnt.execute(api, { name: 'STAT3', glyph_type: 'macromolecule', compartment: 'Cytoplasm' })
-  addProc.execute(api, { name: 'phosphorylation', process_type: 'biochemical_reaction', compartment: 'Cytoplasm' })
+  addProc.execute(api, {
+    name: 'phosphorylation',
+    process_type: 'biochemical_reaction',
+    compartment: 'Cytoplasm'
+  })
   addArc.execute(api, { source: 'JAK2', target: 'phosphorylation', arc_type: 'consumption' })
   addArc.execute(api, { source: 'phosphorylation', target: 'STAT3', arc_type: 'production' })
   api.endPathwayBatch()
@@ -41,8 +46,8 @@ function countOverlaps(graph: SceneGraph): number {
     for (let j = i + 1; j < positions.length; j++) {
       const a = positions[i]
       const b = positions[j]
-      const overlapX = Math.abs((a.absX + a.w / 2) - (b.absX + b.w / 2)) < (a.w + b.w) / 2
-      const overlapY = Math.abs((a.absY + a.h / 2) - (b.absY + b.h / 2)) < (a.h + b.h) / 2
+      const overlapX = Math.abs(a.absX + a.w / 2 - (b.absX + b.w / 2)) < (a.w + b.w) / 2
+      const overlapY = Math.abs(a.absY + a.h / 2 - (b.absY + b.h / 2)) < (a.h + b.h) / 2
       if (overlapX && overlapY) count++
     }
   }
@@ -60,8 +65,10 @@ function verifyCompartmentContainment(graph: SceneGraph): string[] {
       const gcAbs = graph.getAbsolutePosition(gcId)
       if (gcAbs.x < compAbs.x) violations.push(`${gc.name} left edge outside ${node.name}`)
       if (gcAbs.y < compAbs.y) violations.push(`${gc.name} top edge outside ${node.name}`)
-      if (gcAbs.x + gc.width > compAbs.x + node.width) violations.push(`${gc.name} right edge outside ${node.name}`)
-      if (gcAbs.y + gc.height > compAbs.y + node.height) violations.push(`${gc.name} bottom edge outside ${node.name}`)
+      if (gcAbs.x + gc.width > compAbs.x + node.width)
+        violations.push(`${gc.name} right edge outside ${node.name}`)
+      if (gcAbs.y + gc.height > compAbs.y + node.height)
+        violations.push(`${gc.name} bottom edge outside ${node.name}`)
     }
   }
   return violations
@@ -78,8 +85,10 @@ function verifyLocalCoords(graph: SceneGraph): string[] {
       const gcAbs = graph.getAbsolutePosition(gcId)
       const expectedLocalX = gcAbs.x - compAbs.x
       const expectedLocalY = gcAbs.y - compAbs.y
-      if (Math.abs(gc.x - expectedLocalX) > 0.5) violations.push(`${gc.name} local x=${gc.x} expected=${expectedLocalX}`)
-      if (Math.abs(gc.y - expectedLocalY) > 0.5) violations.push(`${gc.name} local y=${gc.y} expected=${expectedLocalY}`)
+      if (Math.abs(gc.x - expectedLocalX) > 0.5)
+        violations.push(`${gc.name} local x=${gc.x} expected=${expectedLocalX}`)
+      if (Math.abs(gc.y - expectedLocalY) > 0.5)
+        violations.push(`${gc.name} local y=${gc.y} expected=${expectedLocalY}`)
     }
   }
   return violations
@@ -177,7 +186,11 @@ describe('Pathway layout', () => {
     addComp.execute(api, { name: 'Nucleus' })
     addEnt.execute(api, { name: 'JAK2', glyph_type: 'macromolecule', compartment: 'Cytoplasm' })
     addEnt.execute(api, { name: 'STAT3_p', glyph_type: 'macromolecule', compartment: 'Nucleus' })
-    addProc.execute(api, { name: 'translocation', process_type: 'transport', compartment: 'Cytoplasm' })
+    addProc.execute(api, {
+      name: 'translocation',
+      process_type: 'transport',
+      compartment: 'Cytoplasm'
+    })
     addArc.execute(api, { source: 'JAK2', target: 'translocation', arc_type: 'consumption' })
     addArc.execute(api, { source: 'translocation', target: 'STAT3_p', arc_type: 'production' })
     api.endPathwayBatch()
@@ -244,6 +257,61 @@ describe('Pathway layout', () => {
     expect(result.positioned).toBe(4)
     expect(result.layers).toBeGreaterThanOrEqual(1)
     expect(countOverlaps(graph)).toBe(0)
+  })
+
+  it('keeps same-layer compartments disjoint (no interleaved boxes)', () => {
+    const graph = new SceneGraph()
+    const api = new FigmaAPI(graph)
+
+    const begin = findTool('begin_pathway')
+    const addComp = findTool('add_compartment')
+    const addEnt = findTool('add_entity')
+    const addProc = findTool('add_process')
+    const addArc = findTool('add_arc')
+
+    // JAK-STAT-like top: both compartments own layer-0 source nodes
+    begin.execute(api, {})
+    addComp.execute(api, { name: 'Extracellular' })
+    addComp.execute(api, { name: 'Cytoplasm' })
+    addEnt.execute(api, { name: 'IL6', glyph_type: 'macromolecule', compartment: 'Extracellular' })
+    addEnt.execute(api, { name: 'IL6R', glyph_type: 'macromolecule', compartment: 'Extracellular' })
+    addEnt.execute(api, { name: 'JAK1', glyph_type: 'macromolecule', compartment: 'Cytoplasm' })
+    addEnt.execute(api, { name: 'STAT3', glyph_type: 'macromolecule', compartment: 'Cytoplasm' })
+    addProc.execute(api, {
+      name: 'binding',
+      process_type: 'association',
+      compartment: 'Extracellular'
+    })
+    addProc.execute(api, {
+      name: 'phosphorylation',
+      process_type: 'biochemical_reaction',
+      compartment: 'Cytoplasm'
+    })
+    addArc.execute(api, { source: 'IL6', target: 'binding', arc_type: 'consumption' })
+    addArc.execute(api, { source: 'IL6R', target: 'binding', arc_type: 'consumption' })
+    addArc.execute(api, { source: 'JAK1', target: 'phosphorylation', arc_type: 'consumption' })
+    addArc.execute(api, { source: 'phosphorylation', target: 'STAT3', arc_type: 'production' })
+    api.endPathwayBatch()
+
+    const pageId = api.currentPage.id
+    const result = hierarchicalLayout(graph, pageId, { direction: 'top-bottom', spacing: 60 })
+
+    expect(result.positioned).toBe(6)
+    expect(countOverlaps(graph)).toBe(0)
+    expect(verifyCompartmentContainment(graph)).toEqual([])
+
+    // Compartment boxes must not intersect each other
+    const comps: Array<{ name: string; x: number; y: number; w: number; h: number }> = []
+    for (const [, node] of graph.nodes) {
+      if (node.type !== 'COMPARTMENT') continue
+      const abs = graph.getAbsolutePosition(node.id)
+      comps.push({ name: node.name, x: abs.x, y: abs.y, w: node.width, h: node.height })
+    }
+    expect(comps.length).toBe(2)
+    const [a, b] = comps
+    const disjointX = a.x + a.w <= b.x + 0.5 || b.x + b.w <= a.x + 0.5
+    const disjointY = a.y + a.h <= b.y + 0.5 || b.y + b.h <= a.y + 0.5
+    expect(disjointX || disjointY).toBe(true)
   })
 
   it('verifies Compartment local coordinates after layout', () => {

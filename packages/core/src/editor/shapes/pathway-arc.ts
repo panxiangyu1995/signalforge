@@ -1,6 +1,6 @@
 import { updatePathwayData, type PathwayArcType } from '@signal-forge/scene-graph'
 
-import type { EditorContext } from '../types'
+import type { EditorContext } from '#core/editor/types'
 
 export function createPathwayArcInteraction(ctx: EditorContext) {
   let isDragging = false
@@ -18,7 +18,7 @@ export function createPathwayArcInteraction(ctx: EditorContext) {
       x1: node.x + node.width / 2,
       y1: node.y + node.height / 2,
       x2: node.x + node.width / 2,
-      y2: node.y + node.height / 2,
+      y2: node.y + node.height / 2
     }
   }
 
@@ -37,7 +37,7 @@ export function createPathwayArcInteraction(ctx: EditorContext) {
     if (targetId === sourceId) return null
 
     const node = ctx.graph.createNode('PATHWAY_ARC', ctx.state.currentPageId, {
-      name: 'Arc',
+      name: 'Arc'
     })
     updatePathwayData(node, { arcType, sourceId, targetId })
 
@@ -60,8 +60,14 @@ export function createPathwayArcInteraction(ctx: EditorContext) {
     updatePreview,
     completeArc,
     cancel,
-    get isDragging() { return isDragging },
-    get sourceId() { return sourceId },
-    get previewLine() { return previewLine },
+    get isDragging() {
+      return isDragging
+    },
+    get sourceId() {
+      return sourceId
+    },
+    get previewLine() {
+      return previewLine
+    }
   }
 }

@@ -73,7 +73,7 @@ export function handleToolMouseDown({
   }
 
   if (tool === 'PATHWAY_ARC') {
-    startPathwayArcInput(cx, cy, editor, hitFns, setDrag)
+    startPathwayArcInput(cx, cy, hitFns, setDrag)
     return
   }
 

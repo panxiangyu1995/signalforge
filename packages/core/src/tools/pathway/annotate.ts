@@ -32,11 +32,11 @@ export const annotatePathway = defineTool({
     }
   },
   execute: (figma, args) => {
-    const trimmedValue = (args.value as string).trim()
+    const trimmedValue = args.value.trim()
     if (!trimmedValue) return { error: 'Annotation value must not be empty' }
     if (trimmedValue.length > 2048) return { error: 'Annotation value exceeds maximum length (2048 characters)' }
 
-    if (!VALID_ANNOTATION_TYPES.includes(args.type as string)) {
+    if (!VALID_ANNOTATION_TYPES.includes(args.type)) {
       return { error: `Invalid annotation type: ${args.type}. Must be one of: ${VALID_ANNOTATION_TYPES.join(', ')}` }
     }
 

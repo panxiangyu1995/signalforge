@@ -9,7 +9,9 @@ export function chatPersistencePlugin(): Plugin {
   function ensureLogDir(): void {
     try {
       if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn('[chat-persistence] Failed to ensure log directory:', err)
+    }
   }
 
   return {
@@ -26,8 +28,8 @@ export function chatPersistencePlugin(): Plugin {
 
         try {
           let body = ''
-          for await (const chunk of req as any) {
-            body += chunk
+          for await (const chunk of req) {
+            body += chunk.toString()
           }
 
           const { date: dateStr, fileName, content } = JSON.parse(body)

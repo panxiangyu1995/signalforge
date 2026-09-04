@@ -3,13 +3,12 @@ import { getPathwayData } from '@signal-forge/scene-graph'
 
 import { SBGN_STYLE } from '#core/pathway/constants'
 
-interface NodeInfo {
-  id: string
-  type: 'epn' | 'process' | 'compartment'
-  width: number
-  height: number
-  compartmentId: string | null
-}
+import {
+  compartmentOrder,
+  computePositions,
+  groupLayersByCompartment,
+  type NodeInfo
+} from './bands'
 
 interface ArcInfo {
   sourceId: string
@@ -18,9 +17,14 @@ interface ArcInfo {
 }
 
 const FLOW_ARC_TYPES: ReadonlySet<string> = new Set([
-  'consumption', 'production',
-  'catalysis', 'inhibition', 'stimulation',
-  'necessary_stimulation', 'modulation', 'trigger',
+  'consumption',
+  'production',
+  'catalysis',
+  'inhibition',
+  'stimulation',
+  'necessary_stimulation',
+  'modulation',
+  'trigger'
 ])
 
 function parentCompartmentId(graph: SceneGraph, node: { parentId: string | null }): string | null {
@@ -32,7 +36,12 @@ function parentCompartmentId(graph: SceneGraph, node: { parentId: string | null 
 function collectPathwayGraph(
   graph: SceneGraph,
   pageId: string
-): { nodes: Map<string, NodeInfo>; arcs: ArcInfo[]; epnIds: string[]; processIds: string[] } | null {
+): {
+  nodes: Map<string, NodeInfo>
+  arcs: ArcInfo[]
+  epnIds: string[]
+  processIds: string[]
+} | null {
   const page = graph.getNode(pageId)
   if (!page) return null
 
@@ -48,13 +57,35 @@ function collectPathwayGraph(
 
     const data = getPathwayData(child)
     if (child.type === 'PATHWAY_GLYPH') {
-      nodes.set(child.id, { id: child.id, type: 'epn', width: child.width, height: child.height, compartmentId: parentCompartmentId(graph, child) })
+      nodes.set(child.id, {
+        id: child.id,
+        type: 'epn',
+        width: child.width,
+        height: child.height,
+        compartmentId: parentCompartmentId(graph, child)
+      })
     } else if (child.type === 'PATHWAY_PROCESS') {
-      nodes.set(child.id, { id: child.id, type: 'process', width: child.width, height: child.height, compartmentId: parentCompartmentId(graph, child) })
+      nodes.set(child.id, {
+        id: child.id,
+        type: 'process',
+        width: child.width,
+        height: child.height,
+        compartmentId: parentCompartmentId(graph, child)
+      })
     } else if (child.type === 'COMPARTMENT') {
-      nodes.set(child.id, { id: child.id, type: 'compartment', width: child.width, height: child.height, compartmentId: null })
-    } else if (child.type === 'PATHWAY_ARC' && data?.sourceId && data?.targetId) {
-      arcs.push({ sourceId: data.sourceId, targetId: data.targetId, arcType: data.arcType ?? 'consumption' })
+      nodes.set(child.id, {
+        id: child.id,
+        type: 'compartment',
+        width: child.width,
+        height: child.height,
+        compartmentId: null
+      })
+    } else if (child.type === 'PATHWAY_ARC' && data?.sourceId && data.targetId) {
+      arcs.push({
+        sourceId: data.sourceId,
+        targetId: data.targetId,
+        arcType: data.arcType ?? 'consumption'
+      })
     }
 
     stack.push(...child.childIds)
@@ -98,7 +129,11 @@ function buildAdjacency(
 export function hierarchicalLayout(
   graph: SceneGraph,
   pageId: string,
-  options?: { direction?: 'top-bottom' | 'left-right'; spacing?: number; respectPositions?: boolean }
+  options?: {
+    direction?: 'top-bottom' | 'left-right'
+    spacing?: number
+    respectPositions?: boolean
+  }
 ): { positioned: number; layers: number } {
   const collected = collectPathwayGraph(graph, pageId)
   if (!collected) return { positioned: 0, layers: 0 }
@@ -117,6 +152,8 @@ export function hierarchicalLayout(
   const maxLayer = layers.length - 1
 
   barycenterOrder(layers, downEdges, upEdges, maxLayer)
+  const compOrder = compartmentOrder(layerMap, nodes)
+  groupLayersByCompartment(layers, nodes, compOrder)
 
   const direction = options?.direction ?? 'top-bottom'
   const spacing = options?.spacing ?? 60
@@ -146,7 +183,7 @@ function collectExistingPositions(
 
   for (const id of nodeIds) {
     const abs = graph.getAbsolutePosition(id)
-    if (abs) positions.set(id, { x: abs.x, y: abs.y })
+    positions.set(id, { x: abs.x, y: abs.y })
   }
 
   return positions
@@ -187,11 +224,11 @@ function breakCycles(
   const dagDown = new Map<string, string[]>()
   const dagUp = new Map<string, string[]>()
   for (const [src, targets] of downEdges) {
-    const filtered = targets.filter(tgt => !backEdges.has(`${src}->${tgt}`))
+    const filtered = targets.filter((tgt) => !backEdges.has(`${src}->${tgt}`))
     if (filtered.length > 0) dagDown.set(src, filtered)
   }
   for (const [tgt, sources] of upEdges) {
-    const filtered = sources.filter(src => !backEdges.has(`${src}->${tgt}`))
+    const filtered = sources.filter((src) => !backEdges.has(`${src}->${tgt}`))
     if (filtered.length > 0) dagUp.set(tgt, filtered)
   }
   return { downEdges: dagDown, upEdges: dagUp }
@@ -241,10 +278,7 @@ function computeInDegree(
   return inDegree
 }
 
-function topoSort(
-  allIds: Set<string>,
-  downEdges: Map<string, string[]>
-): string[] {
+function topoSort(allIds: Set<string>, downEdges: Map<string, string[]>): string[] {
   const inDegree = computeInDegree(allIds, downEdges)
 
   const queue: string[] = []
@@ -276,10 +310,7 @@ function topoSort(
   return topoOrder
 }
 
-function buildLayerArrays(
-  layerMap: Map<string, number>,
-  nodeIds: string[]
-): string[][] {
+function buildLayerArrays(layerMap: Map<string, number>, nodeIds: string[]): string[][] {
   let maxLayer = 0
   for (const id of nodeIds) {
     const l = layerMap.get(id) ?? 0
@@ -331,7 +362,7 @@ function barycenterOrder(
   for (let round = 0; round < 10; round++) {
     for (let l = 1; l <= maxLayer; l++) {
       const ids = layers[l]
-      if (!ids || ids.length <= 1) continue
+      if (ids.length <= 1) continue
       const orderMap = new Map<string, number>()
       const prevIds = layers[l - 1] ?? []
       prevIds.forEach((id, i) => orderMap.set(id, i))
@@ -342,7 +373,7 @@ function barycenterOrder(
 
     for (let l = maxLayer - 1; l >= 0; l--) {
       const ids = layers[l]
-      if (!ids || ids.length <= 1) continue
+      if (ids.length <= 1) continue
       const orderMap = new Map<string, number>()
       const nextIds = layers[l + 1] ?? []
       nextIds.forEach((id, i) => orderMap.set(id, i))
@@ -351,47 +382,6 @@ function barycenterOrder(
       ids.sort((a, b) => (bc.get(a) ?? 0) - (bc.get(b) ?? 0))
     }
   }
-}
-
-function computePositions(
-  layers: string[][],
-  nodes: Map<string, NodeInfo>,
-  direction: 'top-bottom' | 'left-right',
-  spacing: number
-): Map<string, Vector> {
-  const isTB = direction === 'top-bottom'
-  const layerGap = spacing * 2.5
-  const nodeGap = spacing
-  const absPositions = new Map<string, Vector>()
-
-  for (let l = 0; l < layers.length; l++) {
-    const ids = layers[l]
-    if (ids.length === 0) continue
-
-    const sizes = ids.map(id => nodes.get(id))
-    const totalAxisSize = sizes.reduce((sum, n) => sum + (isTB ? (n?.width ?? 0) : (n?.height ?? 0)), 0)
-    const totalGaps = (ids.length - 1) * nodeGap
-    const totalSpan = totalAxisSize + totalGaps
-
-    let pos = -totalSpan / 2
-
-    for (const id of ids) {
-      const info = nodes.get(id)
-      if (!info) continue
-      const w = info.width
-      const h = info.height
-
-      if (isTB) {
-        absPositions.set(id, { x: pos, y: l * layerGap })
-        pos += w + nodeGap
-      } else {
-        absPositions.set(id, { x: l * layerGap, y: pos })
-        pos += h + nodeGap
-      }
-    }
-  }
-
-  return absPositions
 }
 
 function removeOverlaps(
@@ -510,7 +500,12 @@ function commitPositions(
 
     const bounds = compBounds.get(child.id)
     if (bounds) {
-      graph.updateNode(child.id, { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height })
+      graph.updateNode(child.id, {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height
+      })
     }
 
     if (child.childIds.length === 0) continue

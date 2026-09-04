@@ -175,5 +175,22 @@
   "blendModeHue": "Тон",
   "blendModeSaturation": "Насыщенность",
   "blendModeColor": "Цвет",
-  "blendModeLuminosity": "Яркость"
+  "blendModeLuminosity": "Яркость",
+  "pathway": "Путь",
+  "glyphType": "Тип глифа",
+  "processType": "Тип процесса",
+  "arcType": "Тип дуги",
+  "stateVariable": "Переменная состояния",
+  "unitOfInformation": "Единица информации",
+  "compartment": "Компартмент",
+  "cloneMarker": "Маркер клона",
+  "variable": "Переменная",
+  "value": "Значение",
+  "addStateVariable": "Добавить переменную состояния",
+  "addUnitOfInformation": "Добавить единицу информации",
+  "removeStateVariable": "Удалить переменную состояния",
+  "removeUnitOfInformation": "Удалить единицу информации",
+  "source": "Источник",
+  "target": "Цель",
+  "inspector": "Инспектор"
 }

@@ -21,7 +21,7 @@ export function paintBezierArc(
   r: SkiaRenderer
 ): void {
   if (bendPoints && bendPoints.length > 0) {
-    paintBezierWithBends(ck, canvas, sx, sy, tx, ty, bendPoints, sourcePort, targetPort, r)
+    paintBezierWithBends(ck, canvas, sx, sy, tx, ty, bendPoints, r)
     return
   }
 
@@ -64,8 +64,7 @@ function computeControlPoint(
     else if (side === 'top-left') { dirX = -0.707; dirY = -0.707 }
     else if (side === 'top-right') { dirX = 0.707; dirY = -0.707 }
     else if (side === 'bottom-left') { dirX = -0.707; dirY = 0.707 }
-    else if (side === 'bottom-right') { dirX = 0.707; dirY = 0.707 }
-    else { dirX = dx / dist; dirY = dy / dist }
+    else { dirX = 0.707; dirY = 0.707 }
   } else {
     dirX = dx / dist
     dirY = dy / dist
@@ -83,8 +82,6 @@ function paintBezierWithBends(
   tx: number,
   ty: number,
   bendPoints: Vector[],
-  sourcePort: PortPosition | undefined,
-  targetPort: PortPosition | undefined,
   r: SkiaRenderer
 ): void {
   const points = [

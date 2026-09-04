@@ -10,14 +10,16 @@ export function aiDevLogPlugin(): Plugin {
     try {
       const dir = resolve(process.cwd(), '.logs')
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.warn('[ai-dev-log] Failed to ensure log directory:', err)
+    }
   }
 
   return {
     name: 'ai-dev-log',
-    configureServer(server) {
+    configureServer() {
       ensureLog()
       appendFileSync(logFile, `\n=== dev server started ${new Date().toISOString()} ===\n`, 'utf8')
-    },
+    }
   }
 }

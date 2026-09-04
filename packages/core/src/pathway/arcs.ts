@@ -1,33 +1,49 @@
 import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 
-import { type SceneNode, type SceneGraph, type Vector, type PathwayNodeData, type PathwayArcType, getPathwayData } from '@signal-forge/scene-graph'
+import {
+  type SceneGraph,
+  type Vector,
+  type PathwayNodeData,
+  type PathwayArcType,
+  getPathwayData
+} from '@signal-forge/scene-graph'
 
 import type { SkiaRenderer } from '#core/canvas/renderer'
 
-import { SBGN_STYLE, PUBLICATION_STYLE, REALISTIC_STYLE, type PathwayStyle } from './constants'
-import { findNearestPort } from './ports'
 import { paintBezierArc } from './arcs-bezier'
+import { SBGN_STYLE, PUBLICATION_STYLE, REALISTIC_STYLE, type PathwayStyle } from './constants'
+import { findNearestPort, type PortSide } from './ports'
 import { hexToCKColor } from './utils'
 
-function arcLineColor(ck: CanvasKit, arcType: PathwayArcType | undefined, style: PathwayStyle): Float32Array {
-  if (style === 'publication' && arcType) {
-    if (arcType === 'inhibition' || arcType === 'necessary_stimulation') {
-      return hexToCKColor(ck, PUBLICATION_STYLE.edgeColors.inhibition)
+function arcLineColor(
+  ck: CanvasKit,
+  arcType: PathwayArcType | undefined,
+  style: PathwayStyle
+): Float32Array {
+  if (arcType && (style === 'publication' || style === 'realistic')) {
+    const palette =
+      style === 'realistic' ? REALISTIC_STYLE.edgeColors : PUBLICATION_STYLE.edgeColors
+    if (
+      arcType === 'inhibition' ||
+      arcType === 'necessary_stimulation' ||
+      arcType === 'logic_not'
+    ) {
+      return hexToCKColor(ck, palette.inhibition)
     }
     if (arcType === 'stimulation' || arcType === 'trigger') {
-      return hexToCKColor(ck, PUBLICATION_STYLE.edgeColors.activation)
+      return hexToCKColor(ck, palette.activation)
     }
     if (arcType === 'catalysis') {
-      return hexToCKColor(ck, PUBLICATION_STYLE.edgeColors.catalysis)
+      return hexToCKColor(ck, palette.catalysis)
+    }
+    if (style === 'realistic') {
+      return hexToCKColor(ck, REALISTIC_STYLE.edgeColors.default)
     }
   }
   return hexToCKColor(ck, SBGN_STYLE.edgeLineColor)
 }
 
-function directionVector(
-  from: Vector,
-  to: Vector
-): { dx: number; dy: number; len: number } {
+function directionVector(from: Vector, to: Vector): { dx: number; dy: number; len: number } {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const len = Math.hypot(dx, dy)
@@ -71,13 +87,14 @@ export function paintTBar(
   dirX: number,
   dirY: number,
   size: number,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  lineWidth = 2
 ): void {
   const perpX = -dirY
   const perpY = dirX
   const halfW = size * 0.5
 
-  r.strokePaint.setStrokeWidth(2)
+  r.strokePaint.setStrokeWidth(lineWidth)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
   canvas.drawLine(
     tipX + perpX * halfW,
@@ -94,9 +111,10 @@ export function paintCircleOnLine(
   cx: number,
   cy: number,
   radius: number,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  lineWidth: number = SBGN_STYLE.edgeLineWidth
 ): void {
-  r.strokePaint.setStrokeWidth(SBGN_STYLE.edgeLineWidth)
+  r.strokePaint.setStrokeWidth(lineWidth)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
   canvas.drawCircle(cx, cy, radius, r.strokePaint)
 }
@@ -109,7 +127,8 @@ export function paintOpenTriangle(
   dirX: number,
   dirY: number,
   size: number,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  lineWidth: number = SBGN_STYLE.edgeLineWidth
 ): void {
   const perpX = -dirY
   const perpY = dirX
@@ -124,7 +143,7 @@ export function paintOpenTriangle(
     path.close()
 
     r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.edgeLineWidth)
+    r.strokePaint.setStrokeWidth(lineWidth)
     canvas.drawPath(path, r.strokePaint)
   } finally {
     path.delete()
@@ -153,7 +172,8 @@ export function paintDiamond(
   dirY: number,
   w: number,
   h: number,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  lineWidth: number = SBGN_STYLE.edgeLineWidth
 ): void {
   const perpX = -dirY
   const perpY = dirX
@@ -167,7 +187,7 @@ export function paintDiamond(
     path.close()
 
     r.strokePaint.setStyle(ck.PaintStyle.Stroke)
-    r.strokePaint.setStrokeWidth(SBGN_STYLE.edgeLineWidth)
+    r.strokePaint.setStrokeWidth(lineWidth)
     canvas.drawPath(path, r.strokePaint)
   } finally {
     path.delete()
@@ -182,7 +202,8 @@ export function paintTriggerDecoration(
   dirX: number,
   dirY: number,
   size: number,
-  r: SkiaRenderer
+  r: SkiaRenderer,
+  lineWidth = 2
 ): void {
   paintArrowhead(ck, canvas, tipX, tipY, dirX, dirY, size, r)
 
@@ -192,7 +213,7 @@ export function paintTriggerDecoration(
   const barY = tipY - dirY * size
   const halfW = size * 0.5
 
-  r.strokePaint.setStrokeWidth(2)
+  r.strokePaint.setStrokeWidth(lineWidth)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
   canvas.drawLine(
     barX + perpX * halfW,
@@ -226,6 +247,7 @@ function paintArcDecoration(
   style: PathwayStyle = 'sbgn'
 ): void {
   const scale = decorationScale(style)
+  const decorWidth = SBGN_STYLE.edgeLineWidth * scale
   switch (arcType) {
     case 'production':
       paintArrowhead(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r)
@@ -239,38 +261,69 @@ function paintArcDecoration(
       break
     }
     case 'inhibition':
-      paintTBar(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r)
+      paintTBar(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r, decorWidth)
       break
     case 'catalysis': {
       const cx = targetX - dirX * (CIRCLE_RADIUS * scale + 2)
       const cy = targetY - dirY * (CIRCLE_RADIUS * scale + 2)
-      paintCircleOnLine(ck, canvas, cx, cy, CIRCLE_RADIUS * scale, r)
+      paintCircleOnLine(ck, canvas, cx, cy, CIRCLE_RADIUS * scale, r, decorWidth)
       break
     }
     case 'stimulation':
-      paintOpenTriangle(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r)
+      paintOpenTriangle(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r, decorWidth)
       break
     case 'necessary_stimulation': {
       paintFilledTriangle(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r)
       const barOffset = ARROW_SIZE * scale * 1.2
-      paintTBar(ck, canvas, targetX - dirX * barOffset, targetY - dirY * barOffset, dirX, dirY, ARROW_SIZE * scale, r)
+      paintTBar(
+        ck,
+        canvas,
+        targetX - dirX * barOffset,
+        targetY - dirY * barOffset,
+        dirX,
+        dirY,
+        ARROW_SIZE * scale,
+        r,
+        decorWidth
+      )
       break
     }
     case 'modulation': {
       const cx = targetX - dirX * (DIAMOND_W * scale + 2)
       const cy = targetY - dirY * (DIAMOND_W * scale + 2)
-      paintDiamond(ck, canvas, cx, cy, dirX, dirY, DIAMOND_W * scale, DIAMOND_H * scale, r)
+      paintDiamond(
+        ck,
+        canvas,
+        cx,
+        cy,
+        dirX,
+        dirY,
+        DIAMOND_W * scale,
+        DIAMOND_H * scale,
+        r,
+        decorWidth
+      )
       break
     }
     case 'trigger':
-      paintTriggerDecoration(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r)
+      paintTriggerDecoration(
+        ck,
+        canvas,
+        targetX,
+        targetY,
+        dirX,
+        dirY,
+        ARROW_SIZE * scale,
+        r,
+        decorWidth
+      )
       break
     case 'consumption':
       break
     case 'logic_and': {
       const cx = targetX - dirX * (CIRCLE_RADIUS * scale + 2)
       const cy = targetY - dirY * (CIRCLE_RADIUS * scale + 2)
-      paintCircleOnLine(ck, canvas, cx, cy, CIRCLE_RADIUS * scale, r)
+      paintCircleOnLine(ck, canvas, cx, cy, CIRCLE_RADIUS * scale, r, decorWidth)
       r.fillPaint.setColor(r.strokePaint.getColor())
       r.fillPaint.setStyle(ck.PaintStyle.Fill)
       canvas.drawCircle(cx, cy, CIRCLE_RADIUS * scale * 0.6, r.fillPaint)
@@ -279,11 +332,11 @@ function paintArcDecoration(
     case 'logic_or': {
       const cx = targetX - dirX * (CIRCLE_RADIUS * scale + 2)
       const cy = targetY - dirY * (CIRCLE_RADIUS * scale + 2)
-      paintCircleOnLine(ck, canvas, cx, cy, CIRCLE_RADIUS * scale, r)
+      paintCircleOnLine(ck, canvas, cx, cy, CIRCLE_RADIUS * scale, r, decorWidth)
       break
     }
     case 'logic_not':
-      paintTBar(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r)
+      paintTBar(ck, canvas, targetX, targetY, dirX, dirY, ARROW_SIZE * scale, r, decorWidth)
       break
     default:
       break
@@ -293,7 +346,6 @@ function paintArcDecoration(
 export function paintPathwayArc(
   ck: CanvasKit,
   canvas: Canvas,
-  node: SceneNode,
   data: PathwayNodeData,
   graph: SceneGraph,
   style: PathwayStyle,
@@ -302,11 +354,17 @@ export function paintPathwayArc(
   canvas.save()
   const sourceId = data.sourceId
   const targetId = data.targetId
-  if (!sourceId || !targetId) { canvas.restore(); return }
+  if (!sourceId || !targetId) {
+    canvas.restore()
+    return
+  }
 
   const sourceNode = graph.getNode(sourceId)
   const targetNode = graph.getNode(targetId)
-  if (!sourceNode || !targetNode) { canvas.restore(); return }
+  if (!sourceNode || !targetNode) {
+    canvas.restore()
+    return
+  }
 
   const sourceAbs = graph.getAbsolutePosition(sourceId)
   const targetAbs = graph.getAbsolutePosition(targetId)
@@ -320,7 +378,10 @@ export function paintPathwayArc(
     sx = sourceAbs.x + data.sourcePort.x
     sy = sourceAbs.y + data.sourcePort.y
   } else if (sourceData) {
-    const targetOfSource = { x: targetAbs.x + targetNode.width / 2 - sourceAbs.x, y: targetAbs.y + targetNode.height / 2 - sourceAbs.y }
+    const targetOfSource = {
+      x: targetAbs.x + targetNode.width / 2 - sourceAbs.x,
+      y: targetAbs.y + targetNode.height / 2 - sourceAbs.y
+    }
     const port = findNearestPort(sourceNode, sourceData, targetOfSource)
     sx = sourceAbs.x + port.x
     sy = sourceAbs.y + port.y
@@ -333,7 +394,10 @@ export function paintPathwayArc(
     tx = targetAbs.x + data.targetPort.x
     ty = targetAbs.y + data.targetPort.y
   } else if (targetData) {
-    const targetOfTarget = { x: sourceAbs.x + sourceNode.width / 2 - targetAbs.x, y: sourceAbs.y + sourceNode.height / 2 - targetAbs.y }
+    const targetOfTarget = {
+      x: sourceAbs.x + sourceNode.width / 2 - targetAbs.x,
+      y: sourceAbs.y + sourceNode.height / 2 - targetAbs.y
+    }
     const port = findNearestPort(targetNode, targetData, targetOfTarget)
     tx = targetAbs.x + port.x
     ty = targetAbs.y + port.y
@@ -351,12 +415,19 @@ export function paintPathwayArc(
 
   const lineColor = arcLineColor(ck, data.arcType, style)
   r.strokePaint.setColor(lineColor)
-  r.strokePaint.setStrokeWidth(style === 'realistic' ? REALISTIC_STYLE.arcWidth : SBGN_STYLE.edgeLineWidth)
+  r.strokePaint.setStrokeWidth(
+    style === 'realistic' ? REALISTIC_STYLE.arcWidth : SBGN_STYLE.edgeLineWidth
+  )
+  r.strokePaint.setStrokeCap(style === 'realistic' ? ck.StrokeCap.Round : ck.StrokeCap.Butt)
   r.strokePaint.setStyle(ck.PaintStyle.Stroke)
 
   if (style === 'realistic') {
-    const sp = data.sourcePort ? { side: data.sourcePort.side, x: data.sourcePort.x, y: data.sourcePort.y } : undefined
-    const tp = data.targetPort ? { side: data.targetPort.side, x: data.targetPort.x, y: data.targetPort.y } : undefined
+    const sp = data.sourcePort
+      ? { side: data.sourcePort.side as PortSide, x: data.sourcePort.x, y: data.sourcePort.y }
+      : undefined
+    const tp = data.targetPort
+      ? { side: data.targetPort.side as PortSide, x: data.targetPort.x, y: data.targetPort.y }
+      : undefined
     paintBezierArc(ck, canvas, sx, sy, tx, ty, sp, tp, data.bendPoints, r)
   } else if (data.bendPoints && data.bendPoints.length > 0) {
     const path = new ck.Path()
@@ -379,5 +450,6 @@ export function paintPathwayArc(
     r.strokePaint.setColor(lineColor)
     paintArcDecoration(ck, canvas, data.arcType, tx, ty, dir.dx, dir.dy, r, sx, sy, style)
   }
+  r.strokePaint.setStrokeCap(ck.StrokeCap.Butt)
   canvas.restore()
 }

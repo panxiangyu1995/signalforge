@@ -6,8 +6,8 @@ import {
   analyzeTypography,
   diffCreate,
   diffShow
-} from './analyze'
-import { designToComponentMap, designToTokens } from './codegen'
+} from '#core/tools/analyze'
+import { designToComponentMap, designToTokens } from '#core/tools/codegen'
 import {
   createComponent,
   createInstance,
@@ -19,7 +19,7 @@ import {
   importSvg,
   insertIcon,
   searchIconsTool
-} from './create'
+} from '#core/tools/create'
 import {
   setBlend,
   setConstraints,
@@ -34,7 +34,7 @@ import {
   setStrokeAlign,
   setTextResize,
   setVisible
-} from './modify'
+} from '#core/tools/modify'
 import {
   diffJsx,
   getComponents,
@@ -47,8 +47,8 @@ import {
   queryNodes,
   selectNodes,
   switchPage
-} from './read'
-import type { ToolDef } from './schema'
+} from '#core/tools/read'
+import type { ToolDef } from '#core/tools/schema'
 import {
   arrangeNodes,
   cloneNode,
@@ -64,7 +64,7 @@ import {
   nodeTree,
   renameNode,
   ungroupNode
-} from './structure'
+} from '#core/tools/structure'
 import {
   bindVariable,
   createCollection,
@@ -78,7 +78,7 @@ import {
   listVariables,
   setVariable,
   unbindVariable
-} from './variables'
+} from '#core/tools/variables'
 import {
   booleanExclude,
   booleanIntersect,
@@ -94,7 +94,7 @@ import {
   pathSet,
   viewportGet,
   viewportSet
-} from './vector'
+} from '#core/tools/vector'
 
 /**
  * Extended tools not in CORE_TOOLS — variables, vector ops, analysis,

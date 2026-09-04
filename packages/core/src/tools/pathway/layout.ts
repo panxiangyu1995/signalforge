@@ -1,7 +1,7 @@
-import { defineTool } from '#core/tools/schema'
-
+import { resolveCollisions } from '#core/pathway/layout/collision'
 import { hierarchicalLayout } from '#core/pathway/layout/hierarchical'
 import { computeOrthogonalBendPoints } from '#core/pathway/layout/orthogonal'
+import { defineTool } from '#core/tools/schema'
 
 export const autoLayoutPathway = defineTool({
   name: 'auto_layout_pathway',
@@ -10,11 +10,16 @@ export const autoLayoutPathway = defineTool({
     'Automatically layout pathway nodes using hierarchical layering and orthogonal edge routing. Arranges signal flow top-to-bottom with non-overlapping nodes.',
   params: {
     page_id: { type: 'string', description: 'Page ID to layout (defaults to current page)' },
-    direction: { type: 'string', description: 'Signal flow direction', enum: ['top-bottom', 'left-right'] },
+    direction: {
+      type: 'string',
+      description: 'Signal flow direction',
+      enum: ['top-bottom', 'left-right']
+    },
     spacing: { type: 'number', description: 'Minimum spacing between nodes in pixels', min: 20 },
     algorithm: {
       type: 'string',
-      description: 'Layout algorithm. "hierarchical" uses custom topological sort; "elk" uses ELK.js layered layout for better crossing minimization (not yet available).',
+      description:
+        'Layout algorithm. "hierarchical" uses custom topological sort; "elk" uses ELK.js layered layout for better crossing minimization (not yet available).',
       enum: ['hierarchical', 'elk']
     }
   },
@@ -29,6 +34,7 @@ export const autoLayoutPathway = defineTool({
     }
 
     const result = hierarchicalLayout(figma.graph, pageId, { direction, spacing })
+    resolveCollisions(figma.graph, pageId, 20)
     const bendCount = computeOrthogonalBendPoints(figma.graph, pageId)
 
     return {

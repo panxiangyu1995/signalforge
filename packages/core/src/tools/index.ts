@@ -1,7 +1,7 @@
 import codegenPrompt from './prompts/codegen.md'
 
 export { ALL_TOOLS, CORE_TOOLS, EXTENDED_TOOLS } from './registry'
-export { BIOPATH_CORE_TOOLS, BIOPATH_EXTENDED_TOOLS, BIOPATH_TOOLS } from './registry-biopath'
+export { BIOPATH_CORE_TOOLS, BIOPATH_EXTENDED_TOOLS, BIOPATH_TOOLS } from './registry/biopath'
 export const CODEGEN_PROMPT: string = codegenPrompt
 export { exportImage } from './vector'
 export { defineTool, nodeToResult, nodeSummary, requireNode, NodeNotFoundError } from './schema'

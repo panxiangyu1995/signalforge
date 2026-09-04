@@ -19,7 +19,6 @@ import {
 import type { DesignDocument, DesignElement, DesignNode, DesignStyleDeclaration } from './types'
 
 const SIGNAL_FORGE_DOM_CSS_PLUGIN_ID = 'signal-forge-dom-css'
-const LEGACY_DOM_CSS_PLUGIN_ID = 'open-pencil-dom-css'
 const IMAGE_SOURCE_URL_KEY = 'image-source-url'
 
 export interface DesignDocumentToSceneGraphOptions {

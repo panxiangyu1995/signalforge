@@ -1,7 +1,10 @@
 import type { UIMessage } from 'ai'
 
-import { serializeChatLog } from '@/app/ai/debug'
+import { IS_BROWSER, IS_TAURI } from '@signal-forge/core/constants'
 import type { AIProviderID } from '@signal-forge/core/constants'
+
+import { serializeChatLog } from '@/app/ai/debug'
+import { aiLog } from '@/app/ai/dev-log'
 
 export interface ChatHistoryEntry {
   id: string
@@ -12,15 +15,11 @@ export interface ChatHistoryEntry {
   date: string
 }
 
-function isTauriRuntime(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
 class ChatPersistenceManager {
   async save(chatId: string, messages: UIMessage[], providerID: AIProviderID): Promise<void> {
-    if (typeof window === 'undefined') return
+    if (!IS_BROWSER) return
 
-    if (import.meta.env.DEV && !isTauriRuntime()) {
+    if (import.meta.env.DEV && !IS_TAURI) {
       await this.saveDevLog(messages, providerID)
     } else {
       await this.saveProdLog(chatId, messages, providerID)
@@ -28,7 +27,7 @@ class ChatPersistenceManager {
   }
 
   private async saveDevLog(messages: UIMessage[], providerID: string): Promise<void> {
-    if (typeof window === 'undefined') return
+    if (!IS_BROWSER) return
     try {
       const now = new Date()
       const dateStr = now.toISOString().slice(0, 10)
@@ -37,13 +36,17 @@ class ChatPersistenceManager {
       const content = serializeChatLog(messages)
 
       await this.devServerWriteLog(dateStr, fileName, content)
-      console.info(`[ChatPersistence] Dev log saved: .logs/${dateStr}/${fileName}`)
+      aiLog.info('ChatPersistence', `Dev log saved: .logs/${dateStr}/${fileName}`)
     } catch (err) {
       console.warn('[ChatPersistence] Failed to save dev log:', err)
     }
   }
 
-  private async devServerWriteLog(dateStr: string, fileName: string, content: string): Promise<void> {
+  private async devServerWriteLog(
+    dateStr: string,
+    fileName: string,
+    content: string
+  ): Promise<void> {
     const response = await fetch('/__chat-persistence/write', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,29 +57,37 @@ class ChatPersistenceManager {
     }
   }
 
-  private async saveProdLog(chatId: string, messages: UIMessage[], providerID: string): Promise<void> {
-    if (typeof window === 'undefined') return
+  private async saveProdLog(
+    chatId: string,
+    messages: UIMessage[],
+    providerID: string
+  ): Promise<void> {
+    if (!IS_BROWSER) return
     try {
       const now = new Date()
       const dateStr = now.toISOString().slice(0, 10)
       const timeStr = now.toISOString().slice(11, 19).replace(/:/g, '-')
       const fileName = `${timeStr}_${providerID}.json`
-      const content = JSON.stringify({ chatId, messages, providerID, savedAt: now.toISOString() }, null, 2)
+      const content = JSON.stringify(
+        { chatId, messages, providerID, savedAt: now.toISOString() },
+        null,
+        2
+      )
 
       await this.ensureLogDir(dateStr)
       await this.writeProdFile(`${dateStr}/${fileName}`, content)
-      console.info(`[ChatPersistence] Prod log saved: ${dateStr}/${fileName}`)
+      aiLog.info('ChatPersistence', `Prod log saved: ${dateStr}/${fileName}`)
     } catch (err) {
       console.warn('[ChatPersistence] Failed to save prod log:', err)
     }
   }
 
   private async ensureLogDir(datePath: string): Promise<void> {
-    if (typeof window === 'undefined') return
+    if (!IS_BROWSER) return
     try {
       const { mkdir, exists, BaseDirectory } = await import('@tauri-apps/plugin-fs')
 
-      if (!await exists(datePath, { baseDir: BaseDirectory.AppLocalData })) {
+      if (!(await exists(datePath, { baseDir: BaseDirectory.AppLocalData }))) {
         await mkdir(datePath, { baseDir: BaseDirectory.AppLocalData, recursive: true })
       }
     } catch (err) {
@@ -85,7 +96,7 @@ class ChatPersistenceManager {
   }
 
   private async writeProdFile(path: string, content: string): Promise<void> {
-    if (typeof window === 'undefined') return
+    if (!IS_BROWSER) return
     try {
       const { writeTextFile, BaseDirectory } = await import('@tauri-apps/plugin-fs')
       await writeTextFile(path, content, { baseDir: BaseDirectory.AppLocalData })
@@ -95,7 +106,7 @@ class ChatPersistenceManager {
   }
 
   async loadHistories(): Promise<ChatHistoryEntry[]> {
-    if (typeof window === 'undefined') return []
+    if (!IS_BROWSER) return []
     try {
       const { readDir, BaseDirectory } = await import('@tauri-apps/plugin-fs')
       const entries: ChatHistoryEntry[] = []
@@ -118,12 +129,16 @@ class ChatPersistenceManager {
             let messageCount = 0
             try {
               const { readTextFile } = await import('@tauri-apps/plugin-fs')
-              const content = await readTextFile(`${date}/${file.name}`, { baseDir: BaseDirectory.AppLocalData })
+              const content = await readTextFile(`${date}/${file.name}`, {
+                baseDir: BaseDirectory.AppLocalData
+              })
               if (file.name.endsWith('.json')) {
                 const parsed = JSON.parse(content)
                 messageCount = Array.isArray(parsed.messages) ? parsed.messages.length : 0
               }
-            } catch { /* ignore */ }
+            } catch (err) {
+              console.warn('[ChatPersistence] Failed to parse history file:', err)
+            }
 
             entries.push({
               id: file.name,
@@ -145,7 +160,7 @@ class ChatPersistenceManager {
   }
 
   async loadHistoryFile(filePath: string): Promise<string> {
-    if (typeof window === 'undefined') return ''
+    if (!IS_BROWSER) return ''
     try {
       const { readTextFile, BaseDirectory } = await import('@tauri-apps/plugin-fs')
       return await readTextFile(filePath, { baseDir: BaseDirectory.AppLocalData })

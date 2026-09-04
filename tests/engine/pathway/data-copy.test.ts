@@ -57,14 +57,22 @@ describe('pathway data — copy independence', () => {
     const original = graph.createNode('PATHWAY_GLYPH', page, {
       name: 'EGFR',
       pluginData: [
-        { pluginId: PATHWAY_PLUGIN_ID, key: PATHWAY_PLUGIN_KEY, value: JSON.stringify({ glyphType: 'macromolecule', stateVariables: [{ variable: 'active', value: 'yes' }] }) }
+        {
+          pluginId: PATHWAY_PLUGIN_ID,
+          key: PATHWAY_PLUGIN_KEY,
+          value: JSON.stringify({
+            glyphType: 'macromolecule',
+            stateVariables: [{ variable: 'active', value: 'yes' }]
+          })
+        }
       ]
     })
     const clone = graph.cloneTree(original.id, page)
     expect(clone).not.toBeNull()
+    if (!clone) throw new Error('clone tree not created')
 
     const origData = getPathwayData(original)
-    const cloneData = getPathwayData(clone!)
+    const cloneData = getPathwayData(clone)
     expect(cloneData).not.toBeNull()
     expect(cloneData?.glyphType).toBe(origData?.glyphType)
     expect(cloneData?.stateVariables).toEqual(origData?.stateVariables)
@@ -76,15 +84,20 @@ describe('pathway data — copy independence', () => {
     const original = graph.createNode('PATHWAY_GLYPH', page, {
       name: 'TP53',
       pluginData: [
-        { pluginId: PATHWAY_PLUGIN_ID, key: PATHWAY_PLUGIN_KEY, value: JSON.stringify({ glyphType: 'macromolecule' }) }
+        {
+          pluginId: PATHWAY_PLUGIN_ID,
+          key: PATHWAY_PLUGIN_KEY,
+          value: JSON.stringify({ glyphType: 'macromolecule' })
+        }
       ]
     })
     const clone = graph.cloneTree(original.id, page)
     expect(clone).not.toBeNull()
+    if (!clone) throw new Error('clone tree not created')
 
-    updatePathwayData(clone!, { glyphType: 'phenotype' })
+    updatePathwayData(clone, { glyphType: 'phenotype' })
     expect(getPathwayData(original)?.glyphType).toBe('macromolecule')
-    expect(getPathwayData(clone!)?.glyphType).toBe('phenotype')
+    expect(getPathwayData(clone)?.glyphType).toBe('phenotype')
   })
 })
 

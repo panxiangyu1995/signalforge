@@ -1,7 +1,7 @@
-import { evalCode } from './analyze'
-import { calc } from './calc'
-import { createPage, render } from './create'
-import { describe } from './describe'
+import { evalCode } from '#core/tools/analyze'
+import { calc } from '#core/tools/calc'
+import { createPage, render } from '#core/tools/create'
+import { describe } from '#core/tools/describe'
 import {
   setFill,
   setLayout,
@@ -13,7 +13,7 @@ import {
   setTextProperties,
   setVisible,
   updateNode
-} from './modify'
+} from '#core/tools/modify'
 import {
   addArc,
   addCompartment,
@@ -39,7 +39,7 @@ import {
   setUnitOfInformation,
   splitPathway,
   validatePathway
-} from './pathway'
+} from '#core/tools/pathway'
 import {
   findNodes,
   getCurrentPage,
@@ -50,8 +50,8 @@ import {
   listPages,
   selectNodes,
   switchPage
-} from './read'
-import type { ToolDef } from './schema'
+} from '#core/tools/read'
+import type { ToolDef } from '#core/tools/schema'
 import {
   batchUpdate,
   cloneNode,
@@ -66,13 +66,8 @@ import {
   reparentNode,
   renameNode,
   ungroupNode
-} from './structure'
-import {
-  exportImage,
-  exportPdf,
-  exportSvg,
-  viewportZoomToFit
-} from './vector'
+} from '#core/tools/structure'
+import { exportImage, exportPdf, exportSvg, viewportZoomToFit } from '#core/tools/vector'
 
 export const BIOPATH_CORE_TOOLS: ToolDef[] = [
   getSelection,
@@ -110,7 +105,7 @@ export const BIOPATH_CORE_TOOLS: ToolDef[] = [
   setPathwayStyle,
   validatePathway,
   autoLayoutPathway,
-  queryPathwayDb,
+  queryPathwayDb
 ]
 
 export const BIOPATH_EXTENDED_TOOLS: ToolDef[] = [
@@ -142,10 +137,7 @@ export const BIOPATH_EXTENDED_TOOLS: ToolDef[] = [
   mergePathway,
   splitPathway,
   setActiveState,
-  overlayExpressionData,
+  overlayExpressionData
 ]
 
-export const BIOPATH_TOOLS: ToolDef[] = [
-  ...BIOPATH_CORE_TOOLS,
-  ...BIOPATH_EXTENDED_TOOLS,
-]
+export const BIOPATH_TOOLS: ToolDef[] = [...BIOPATH_CORE_TOOLS, ...BIOPATH_EXTENDED_TOOLS]

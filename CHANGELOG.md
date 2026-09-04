@@ -23,9 +23,15 @@
 - Add desktop image drag-and-drop into the Tauri app window.
 - Add open-document discovery for live CLI and MCP automation so agents can target the intended document and page.
 - Publish lower-level SceneGraph, Pen, Kiwi, Fig, and DOM/CSS functionality through clearer package boundaries for SDK and automation consumers.
+- Add publication-style realistic pathway rendering with per-entity vivid color palettes, phospholipid bilayer membranes, saturated compartment gradients, specular-lit entity glyphs, and semantic state-variable badges for phosphorylation, ubiquitination, acetylation, and methylation.
+- Render transmembrane receptors as multi-column channel glyphs with extracellular loops and intracellular stems, mitochondria as deep-red organelle ellipsoids with wavy cristae, and nucleic acid features with a DNA double-helix decoration.
+- Separate compartments with bead-style membrane lines instead of colored borders, anchor state-variable and unit-of-information badges to glyph top-right corners, and draw thicker colored signal arcs with enlarged arrow decorations.
+- Render realistic mitochondria compartment labels as white centered text inside the organelle body so they stay legible and clear of enclosed entities.
 
 ### Fixes
 
+- Fix pathway arcs keeping stale creation-time port anchors when entities move: new arcs no longer freeze endpoint ports into arc data, and the renderer derives ports from current glyph geometry on every paint.
+- Fix publication and SBGN pathway rendering crashing on process types without a dedicated painter (such as `biochemical_reaction`) by falling back to the plain process glyph.
 - Fix live CLI and MCP automation drifting to the wrong open document or page when multiple files are open.
 - Improve Chinese, Japanese, and Korean text rendering with glyph-aware fallback fonts and outline rendering when needed.
 - Preserve imported Figma text sizing more accurately, especially auto-sized text inside auto-layout frames.
